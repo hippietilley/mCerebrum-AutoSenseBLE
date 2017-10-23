@@ -99,13 +99,9 @@ public class DeviceManager {
     public void delete(String deviceId){
         devicesConfigured.delete(deviceId);
     }
-    public boolean isMotionSense(String name, String serviceID) {
-        return !(name == null || serviceID == null) && name.equals(Constants.MOTION_SENSE) && serviceID.equals(Constants.DEVICE_UUID.toString());
+    public boolean isAutoSense(String name) {
+        return !(name == null) && name.equals(Constants.AUTOSENSE);
     }
-    public boolean isMotionSenseHRV(String name, String serviceID) {
-        return !(name == null || serviceID == null) && name.equals(Constants.MOTION_SENSE_HRV) && serviceID.equals(Constants.DEVICE_UUID.toString());
-    }
-
     public boolean isConfigured(String deviceId) {
         return devicesConfigured.find(deviceId) != null;
     }

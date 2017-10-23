@@ -96,13 +96,11 @@ public class PrefsFragmentSettings extends PreferenceFragment {
                 String name = scanResult.getScanRecord().getDeviceName();
                 List<ParcelUuid> p = scanResult.getScanRecord().getServiceUuids();
                 if (p == null || p.size() != 1 || name == null) return;
-                if (!deviceManager.isMotionSense(name, p.get(0).toString()) && !deviceManager.isMotionSenseHRV(name, p.get(0).toString()))
+                if (!deviceManager.isAutoSense(name))
                     return;
                 if (deviceManager.isConfigured(scanResult.getBleDevice().getMacAddress())) return;
-                if (deviceManager.isMotionSense(name, p.get(0).toString()))
-                    addToPreferenceScreenAvailable(PlatformType.MOTION_SENSE, scanResult.getBleDevice().getMacAddress());
-                else
-                    addToPreferenceScreenAvailable(PlatformType.MOTION_SENSE_HRV, scanResult.getBleDevice().getMacAddress());
+                if (deviceManager.isAutoSense(name))
+                    addToPreferenceScreenAvailable(PlatformType.AUTOSENSE_CHEST, scanResult.getBleDevice().getMacAddress());
             }
         });
     }

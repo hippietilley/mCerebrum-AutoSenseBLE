@@ -43,4 +43,5 @@ public class Constants {
     public static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     public static final String MOTION_SENSE_HRV = "MotionSenseHRV";
     public static final String MOTION_SENSE = "EETech_Motion";
+    public static final String AUTOSENSE="Autosense";
 }
