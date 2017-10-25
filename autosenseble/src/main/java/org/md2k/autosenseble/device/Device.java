@@ -7,6 +7,11 @@ import android.util.Log;
 
 import com.polidea.rxandroidble.RxBleDevice;
 
+import org.md2k.autosenseble.ActivityMain;
+import org.md2k.autosenseble.Constants;
+import org.md2k.autosenseble.MyApplication;
+import org.md2k.autosenseble.device.sensor.DataQualityAccelerometer;
+import org.md2k.autosenseble.device.sensor.Sensor;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.datatype.DataTypeInt;
@@ -15,12 +20,6 @@ import org.md2k.datakitapi.source.METADATA;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.platform.Platform;
 import org.md2k.datakitapi.time.DateTime;
-import org.md2k.autosenseble.ActivityMain;
-import org.md2k.autosenseble.Constants;
-import org.md2k.autosenseble.MyApplication;
-import org.md2k.autosenseble.device.sensor.DataQualityAccelerometer;
-import org.md2k.autosenseble.device.sensor.DataQualityLed;
-import org.md2k.autosenseble.device.sensor.Sensor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,7 +57,7 @@ import rx.functions.Func1;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public abstract class Device extends AbstractTranslate {
+public class Device{
     private Platform platform;
     HashMap<String, Sensor> sensors;
     private Subscription subscriptionDevice;
@@ -69,6 +68,8 @@ public abstract class Device extends AbstractTranslate {
     private long lastReceived=0;
     private static final long TIMEOUT_VALUE = 15000; //Second
     private static final int DELAY = 3000;
+    double[] ecgBuffer;
+    long timeStamplastECGSent;
 
     Device(Platform platform) {
         super();
@@ -115,16 +116,6 @@ public abstract class Device extends AbstractTranslate {
         }
     }
 
-    private void calculateDataQualityLed(){
-        DataQualityLed sensor = (DataQualityLed) sensors.get(Sensor.KEY_DATA_QUALITY_LED);
-        if (sensor != null) {
-            DataTypeInt dataTypeInt = new DataTypeInt(DateTime.getDateTime(), sensor.getStatus());
-            Log.d("data_quality_led","final result="+dataTypeInt.getSample());
-            sensor.insert(dataTypeInt);
-            updateView(Sensor.KEY_DATA_QUALITY_LED, dataTypeInt);
-        }
-    }
-
     void start() throws DataKitException {
         for (Sensor sensor : sensors.values())
             sensor.register();
@@ -144,7 +135,6 @@ public abstract class Device extends AbstractTranslate {
                     @Override
                     public void onNext(Long aLong) {
                         calculateDataQualityAccelerometer();
-                        calculateDataQualityLed();
                     }
                 });
         subscriptionDeviceContinuous=Observable.interval(0, TIMEOUT_VALUE, TimeUnit.MILLISECONDS).map(new Func1<Long, Boolean>() {
@@ -214,36 +204,13 @@ public abstract class Device extends AbstractTranslate {
                         if (bytes.length == 1)
                             insertBattery(bytes[0]);
                         else {
-                            insertToQueue(new Data(getType(), bytes, DateTime.getDateTime()));
+                            insertData(lastReceived, bytes);
                         }
                     }
                 });
 
     }
 
-    private void startFetch(BluetoothDevice device) {
-
- /*       BluetoothGatt mBluetoothGatt = device.connectGatt(MyApplication.getContext(), false, null);
-//        device.fetchUuidsWithSdp()
-        mBluetoothGatt.disconnect();
- //       refreshDeviceCache(mBluetoothGatt);
-*/    }
-/*
-    private boolean refreshDeviceCache(BluetoothGatt gatt){
-        try {
-            BluetoothGatt localBluetoothGatt = gatt;
-            Method localMethod = localBluetoothGatt.getClass().getMethod("refresh", new Class[0]);
-            if (localMethod != null) {
-                boolean bool = ((Boolean) localMethod.invoke(localBluetoothGatt, new Object[0])).booleanValue();
-                return bool;
-            }
-        }
-        catch (Exception localException) {
-            Log.e("abc", "An exception occured while refreshing device");
-        }
-        return false;
-    }
-*/
     private void insertBattery(double value) {
         DataTypeDoubleArray battery = new DataTypeDoubleArray(DateTime.getDateTime(), new double[]{value});
         if (sensors.get(Sensor.KEY_BATTERY) != null) {
@@ -252,45 +219,6 @@ public abstract class Device extends AbstractTranslate {
         }
     }
 
-    abstract void insertData(long timestamp, long gyroOffset, Data blData);
-
-    /*
-        void insertData(long timestamp, long gyroOffset, Data blData) {
-            DataTypeDoubleArray acl, gyr1, gyr2, led, raw, seq;
-            double[] aclSample=blData.getAccelerometer();
-            acl=new DataTypeDoubleArray(timestamp, aclSample);
-            if(sensors.get(Sensor.KEY_DATA_QUALITY_ACCELEROMETER)!=null)
-                ((DataQualityAccelerometer)sensors.get(Sensor.KEY_DATA_QUALITY_ACCELEROMETER)).add(aclSample[0]);
-            if(sensors.get(Sensor.KEY_ACCELEROMETER)!=null) {
-                sensors.get(Sensor.KEY_ACCELEROMETER).insert(acl);
-                updateView(Sensor.KEY_ACCELEROMETER, acl);
-            }
-
-            if(getType().equals(PlatformType.MOTION_SENSE) && sensors.get(Sensor.KEY_GYROSCOPE)!=null){
-                gyr1=new DataTypeDoubleArray(timestamp-gyroOffset, blData.getGyroscope());
-                gyr2=new DataTypeDoubleArray(timestamp, blData.getGyroscope2());
-                sensors.get(Sensor.KEY_GYROSCOPE).insert(gyr1);
-                sensors.get(Sensor.KEY_GYROSCOPE).insert(gyr2);
-                updateView(Sensor.KEY_GYROSCOPE, gyr1);
-                updateView(Sensor.KEY_GYROSCOPE, gyr2);
-            }
-            if(getType().equals(PlatformType.MOTION_SENSE_HRV) && sensors.get(Sensor.KEY_LED)!=null){
-                led=new DataTypeDoubleArray(timestamp, blData.getLED());
-                sensors.get(Sensor.KEY_LED).insert(led);
-                updateView(Sensor.KEY_LED, led);
-            }
-            if(sensors.get(Sensor.KEY_RAW)!=null){
-                raw=new DataTypeDoubleArray(timestamp, blData.getRawData());
-                sensors.get(Sensor.KEY_RAW).insert(raw);
-                updateView(Sensor.KEY_RAW, raw);
-            }
-            if(sensors.get(Sensor.KEY_SEQUENCE_NUMBER)!=null){
-                seq=new DataTypeDoubleArray(timestamp, blData.getSequenceNumber());
-                sensors.get(Sensor.KEY_SEQUENCE_NUMBER).insert(seq);
-                updateView(Sensor.KEY_SEQUENCE_NUMBER, seq);
-            }
-       }
-    */
     void stop() {
         if (subscriptionDeviceContinuous != null && !subscriptionDeviceContinuous.isUnsubscribed())
             subscriptionDeviceContinuous.unsubscribe();
@@ -333,7 +261,7 @@ public abstract class Device extends AbstractTranslate {
         return dataSources;
     }
 
-    void updateView(String key, DataType data) {
+    private void updateView(String key, DataType data) {
         String deviceId = getDeviceId(), platformId = getId();
         if (startTimestamp == 0) startTimestamp = DateTime.getDateTime();
         Intent intent = new Intent(ActivityMain.INTENT_NAME);
@@ -356,5 +284,74 @@ public abstract class Device extends AbstractTranslate {
         if (subscriptionDevice != null && !subscriptionDevice.isUnsubscribed())
             subscriptionDevice.unsubscribe();
 
+    }
+    private void insertData(long timestamp, byte[] data) {
+        DataTypeDoubleArray acl, respiration, ecg, raw, seq;
+        double[] aclSample=Data.getAccelerometer(data);
+        double[] ecgSample = Data.getECG(data);
+        double[] respirationSample=Data.getRespiration(data);
+        double[] seqSample= Data.getSequenceNumber(data);
+        double[] rawSample=Data.getRawData(data);
+
+
+        acl=new DataTypeDoubleArray(timestamp, aclSample);
+        ecg=new DataTypeDoubleArray(timestamp, ecgSample);
+        respiration=new DataTypeDoubleArray(timestamp, respirationSample);
+        seq=new DataTypeDoubleArray(timestamp, seqSample);
+        raw=new DataTypeDoubleArray(timestamp, rawSample);
+
+        if(sensors.get(Sensor.KEY_DATA_QUALITY_ACCELEROMETER)!=null)
+            ((DataQualityAccelerometer)sensors.get(Sensor.KEY_DATA_QUALITY_ACCELEROMETER)).add(aclSample[0]);
+        if(sensors.get(Sensor.KEY_ACCELEROMETER)!=null) {
+            sensors.get(Sensor.KEY_ACCELEROMETER).insert(acl);
+            updateView(Sensor.KEY_ACCELEROMETER, acl);
+        }
+
+        if(sensors.get(Sensor.KEY_RESPIRATION)!=null) {
+            sensors.get(Sensor.KEY_RESPIRATION).insert(respiration);
+            updateView(Sensor.KEY_RESPIRATION, respiration);
+        }
+        if(sensors.get(Sensor.KEY_ECG)!=null) {
+            int seqInt= (int) seqSample[0];
+            switch(seqInt%4){
+                case 0:
+                    ecgBuffer[1-1]=ecgSample[0];
+                    ecgBuffer[5-1]=ecgSample[1];
+                    ecgBuffer[9-1]=ecgSample[2];
+                    ecgBuffer[13-1]=ecgSample[3];
+                    break;
+                case 1:
+                    ecgBuffer[2-1]=ecgSample[0];
+                    ecgBuffer[6-1]=ecgSample[1];
+                    ecgBuffer[10-1]=ecgSample[2];
+                    ecgBuffer[14-1]=ecgSample[3];
+                    break;
+                case 2:
+                    ecgBuffer[3-1]=ecgSample[0];
+                    ecgBuffer[7-1]=ecgSample[1];
+                    ecgBuffer[11-1]=ecgSample[2];
+                    ecgBuffer[15-1]=ecgSample[3];
+                    break;
+                case 3:
+                    ecgBuffer[4-1]=ecgSample[0];
+                    ecgBuffer[8-1]=ecgSample[1];
+                    ecgBuffer[12-1]=ecgSample[2];
+                    ecgBuffer[16-1]=ecgSample[3];
+                    updateView(Sensor.KEY_ECG, ecg);
+                    for(int i=0;i<ecgBuffer.length;i++)
+                        ecgBuffer[i]=-1;
+                    timeStamplastECGSent=DateTime.getDateTime();
+                    break;
+            }
+        }
+
+        if(sensors.get(Sensor.KEY_RAW)!=null){
+            sensors.get(Sensor.KEY_RAW).insert(raw);
+            updateView(Sensor.KEY_RAW, raw);
+        }
+        if(sensors.get(Sensor.KEY_SEQUENCE_NUMBER)!=null){
+            sensors.get(Sensor.KEY_SEQUENCE_NUMBER).insert(seq);
+            updateView(Sensor.KEY_SEQUENCE_NUMBER, seq);
+        }
     }
 }

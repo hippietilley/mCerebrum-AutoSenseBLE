@@ -30,10 +30,9 @@ import java.util.UUID;
  */
 public class Constants {
     public static final String FILENAME_ASSET_METADATA = "metadata.json";
-    public static final String FILENAME_INTERNAL_SDCARD_DEFAULT_CONFIG = "/mCerebrum/org.md2k.motionsense/default_config.json";
-    public static final String FILENAME_INTERNAL_SDCARD_CONFIG = "/mCerebrum/org.md2k.motionsense/config.json";
+    public static final String FILENAME_INTERNAL_SDCARD_DEFAULT_CONFIG = "/mCerebrum/org.md2k.autosenseble/default_config.json";
+    public static final String FILENAME_INTERNAL_SDCARD_CONFIG = "/mCerebrum/org.md2k.autosenseble/config.json";
 
-    public static final String SERVICE_NAME = "org.md2k.motionsense.ServiceAutoSense";
     public static final UUID DEVICE_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb");
     public static final UUID IMU_SERVICE_UUID = UUID.fromString("da395d22-1d81-48e2-9c68-d0ae4bbd351f");
     public static final UUID BATTERY_SERVICE_UUID = UUID.fromString("da39adf0-1d81-48e2-9c68-d0ae4bbd351f");
@@ -41,7 +40,5 @@ public class Constants {
     public static final UUID IMU_SERV_CHAR_UUID = UUID.fromString("da39c921-1d81-48e2-9c68-d0ae4bbd351f");
 
     public static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
-    public static final String MOTION_SENSE_HRV = "MotionSenseHRV";
-    public static final String MOTION_SENSE = "EETech_Motion";
     public static final String AUTOSENSE="Autosense";
 }

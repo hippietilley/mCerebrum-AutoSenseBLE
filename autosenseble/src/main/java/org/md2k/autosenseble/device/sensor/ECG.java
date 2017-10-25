@@ -1,6 +1,7 @@
 package org.md2k.autosenseble.device.sensor;
 
 import org.md2k.datakitapi.source.datasource.DataSource;
+import org.md2k.datakitapi.time.DateTime;
 
 /*
  * Copyright (c) 2016, The University of Memphis, MD2K Center
@@ -28,8 +29,9 @@ import org.md2k.datakitapi.source.datasource.DataSource;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class LED extends Sensor {
-    public LED(DataSource dataSource) {
+public class ECG extends Sensor {
+    public ECG(DataSource dataSource) {
         super(dataSource);
     }
+
 }

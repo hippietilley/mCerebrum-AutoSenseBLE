@@ -26,153 +26,73 @@ package org.md2k.autosenseble.device;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.md2k.datakitapi.source.platform.PlatformType;
+import android.util.Log;
 
 class Data {
-    private byte[] data;
-    private long timestamp;
-    String platformType;
 
-    Data(String platformType, byte[] data, long timestamp) {
-        this.timestamp = timestamp;
-        this.data = data;
-        this.platformType=platformType;
-    }
-
-    public byte[] getData() {
-        return data;
-    }
-
-    long getTimestamp() {
-        return timestamp;
-    }
-
-    double[] getSequenceNumber() {
-        int seq;
-        if(platformType.equals(PlatformType.MOTION_SENSE))
-            seq=byteArrayToIntBE(new byte[]{data[18], data[19]});
-        else{
-            int x=(data[19] & 0x00000000000000ff);
-            int y=(data[18] & 0x3);
-            seq=(y<<8)+x;
-        }
+    static double[] getSequenceNumber(byte[] data) {
+        int x=(data[19] & 0x00000000000000ff);
+        int y=(data[18] & 0xf);
+        int seq=(y<<8)+x;
         return new double[]{seq};
     }
+    static double[] getECG(byte[] data) {
+        double[] d=new double[4];
+        int x=(data[7] & 0x00000000000000ff);
+        int y=(data[6] & 0xff);
+        int seq=(y<<8)+x;
+        d[0]=seq;
+        x=(data[9] & 0x00000000000000ff);
+        y=(data[8] & 0xff);
+        seq=(y<<8)+x;
+        d[1]=seq;
+        x=(data[11] & 0x00000000000000ff);
+        y=(data[10] & 0xff);
+        seq=(y<<8)+x;
+        d[2]=seq;
+        x=(data[16] & 0x00000000000000ff);
+        y=(data[15] & 0xff);
+        seq=(y<<8)+x;
+        d[3]=seq;
+        return d;
 
-    private int byteArrayToIntBE(byte[] bytes) {
+    }
+
+    static double[] getRespiration(byte[] data) {
+        double[] sample = new double[2];
+        int x=(data[14] & 0x00000000000000ff);
+        int y=(data[13] & 0xf);
+        int seq=(y<<8)+x;
+
+        int xo=((data[13] & 0xf0)>>4);
+        int yo=(data[12] & 0x00000000000000ff);
+        int seqO=(yo<<4)+xo;
+
+        sample[0] = seq;
+        sample[1] = seqO;
+//        Log.d("abc","s="+sample[0]+" "+sample[1]);
+        return sample;
+    }
+
+    private static int byteArrayToIntBE(byte[] bytes) {
         return java.nio.ByteBuffer.wrap(bytes).getShort();
     }
 
-    void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    private double convertGyroADCtoSI(double x) {
-        return 250.0 * x / 32768;
-    }
-
-    private double convertAccelADCtoSI(double x) {
+    private static double convertAccelADCtoSI(double x) {
         return 1.0 * x / 16384;
     }
 
 
-    double[] getAccelerometer() {
+    static double[] getAccelerometer(byte[] data) {
         double[] sample = new double[3];
-        sample[0] = convertAccelADCtoSI(byteArrayToIntBE(new byte[]{getData()[0], getData()[1]}));
-        sample[1] = convertAccelADCtoSI(byteArrayToIntBE(new byte[]{getData()[2], getData()[3]}));
-        sample[2] = convertAccelADCtoSI(byteArrayToIntBE(new byte[]{getData()[4], getData()[5]}));
+        sample[0] = convertAccelADCtoSI(byteArrayToIntBE(new byte[]{data[0], data[1]}));
+        sample[1] = convertAccelADCtoSI(byteArrayToIntBE(new byte[]{data[2], data[3]}));
+        sample[2] = convertAccelADCtoSI(byteArrayToIntBE(new byte[]{data[4], data[5]}));
         return sample;
     }
 
-    double[] getGyroscope() {
-        double[] sample = new double[3];
-        sample[0] = convertGyroADCtoSI(byteArrayToIntBE(new byte[]{getData()[6], getData()[7]}));
-        sample[1] = convertGyroADCtoSI(byteArrayToIntBE(new byte[]{getData()[8], getData()[9]}));
-        sample[2] = convertGyroADCtoSI(byteArrayToIntBE(new byte[]{getData()[10], getData()[11]}));
-        return sample;
-    }
-    double[] getGyroscope2(){
-        double[] sample = new double[3];
-        sample[0] = convertGyroADCtoSI(byteArrayToIntBE(new byte[]{getData()[12], getData()[13]}));
-        sample[1] = convertGyroADCtoSI(byteArrayToIntBE(new byte[]{getData()[14], getData()[15]}));
-        sample[2] = convertGyroADCtoSI(byteArrayToIntBE(new byte[]{getData()[16], getData()[17]}));
-        return sample;
-    }
-    double[] getLED(){
-        double[] sample = new double[3];
-        sample[0] = convertLED1(getData()[12], getData()[13], getData()[14]);
-        sample[1] = convertLED2(getData()[14], getData()[15], getData()[16]);
-        sample[2] = convertLED3(getData()[16], getData()[17], getData()[18]);
-        return sample;
-    }
-    private double convertLED1(byte msb, byte mid, byte lsb) {
-        int lsbRev, msbRev, midRev;
-        int msbInt, lsbInt,midInt;
-        msbInt = (msb & 0x00000000000000ff);
-        midInt = (mid & 0x00000000000000ff);
-        lsbInt = (lsb & 0x0000000000000003);
-        msbRev = msbInt;
-        lsbRev = lsbInt;
-        midRev=midInt;
 
-        return (msbRev << 10) + (midRev<<2)+lsbRev;
-    }
-
-    private double convertLED2(byte msb, byte mid, byte lsb) {
-        int lsbRev, msbRev, midRev;
-        int msbInt, lsbInt,midInt;
-        msbInt = (msb & 0x000000000000003f);
-        midInt = (mid & 0x00000000000000ff);
-        lsbInt = (lsb & 0x00000000000000f0);
-        msbRev = msbInt;
-        lsbRev = lsbInt;
-        midRev=midInt;
-
-        return (msbRev << 12) + (midRev<<4)+lsbRev;
-    }
-    private double convertLED3(byte msb, byte mid, byte lsb) {
-        int lsbRev, msbRev, midRev;
-        int msbInt, lsbInt,midInt;
-        msbInt = (msb & 0x000000000000000f);
-        midInt = (mid & 0x00000000000000ff);
-        lsbInt = (lsb & 0x00000000000000fc);
-        msbRev = msbInt;
-        lsbRev = lsbInt;
-        midRev=midInt;
-
-        return (msbRev << 14) + (midRev<<6)+lsbRev;
-    }
-
-    private double convertLEDValue(byte msb, byte mid, byte lsb) {
-        int lsbRev, msbRev, midRev;
-        int msbInt, lsbInt,midInt;
-        msbInt = (msb & 0x00000000000000ff);
-        midInt = (mid & 0x00000000000000ff);
-        lsbInt = (lsb & 0x0000000000000003);
-//        byte[] bytes=new byte[]{msb,mid,lsb};
-
-//        return byteArrayToIntBE();
-//        msbRev=reverseByte(msbInt);
-//        lsbRev=reverseByte(lsbInt);
-//        midRev=reverseByte(midInt);
-        msbRev = msbInt;
-        lsbRev = lsbInt;
-        midRev=midInt;
-
-
-//        if(lsb<0) lsbRev=-(int)lsb+128; else lsbRev=lsb;
-//          if(msb<0) msbRev=-(int)msb+128; else msbRev=msb;
-//        lsbRev=reverseByte(lsb);
-//        msbRev=reverseByte(msb);
-//        return java.nio.ByteBuffer.wrap(new byte[]{lsbRev, msbRev,0}).getInt();
-//        return lsbRev<<16+midRev<<8+msbRev;
-//        int value = (msbRev << 16) + midRev<<8+lsbRev;
-        int value = (msbRev << 16) + (midRev<<8)+lsbRev;
-
-        //       Log.d(TAG,"("+msbInt+","+midInt+","+lsbInt+")"+" ("+msbRev+","+midRev+","+lsbRev+")"+ value);
-        return value;
-    }
-    double[] getRawData(){
+    static double[] getRawData(byte[] data){
         double[] sample=new double[data.length];
         for(int i=0;i<data.length;i++)
             sample[i]=data[i];

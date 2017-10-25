@@ -59,10 +59,7 @@ class Devices {
     void add(DataSource dataSource) {
         Device device = find(dataSource.getPlatform());
         if (device == null) {
-            if (dataSource.getPlatform().getType().equals(PlatformType.MOTION_SENSE))
-                device = new DeviceMotionSense(dataSource.getPlatform());
-            else
-                device = new DeviceMotionSenseHRV(dataSource.getPlatform());
+            device = new Device(dataSource.getPlatform());
             devices.add(device);
         }
         device.add(dataSource);

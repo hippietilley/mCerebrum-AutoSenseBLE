@@ -40,7 +40,7 @@ import java.util.HashMap;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class Configuration {
-    public static final String CONFIG_DIRECTORY = Environment.getExternalStorageDirectory().getAbsolutePath() + "/mCerebrum/org.md2k.motionsense/";
+    public static final String CONFIG_DIRECTORY = Environment.getExternalStorageDirectory().getAbsolutePath() + "/mCerebrum/org.md2k.autosenseble/";
     public static final String DEFAULT_CONFIG_FILENAME = "default_config.json";
     public static final String CONFIG_FILENAME = "config.json";
 

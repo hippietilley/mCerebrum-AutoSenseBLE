@@ -26,7 +26,7 @@ public class ActivityPlot extends RealtimeLineChartActivity {
         super.onCreate(savedInstanceState);
         try {
             dataSource = getIntent().getExtras().getParcelable(DataSource.class.getSimpleName());
-        }catch (Exception e){
+        } catch (Exception e) {
             finish();
         }
     }
@@ -58,17 +58,18 @@ public class ActivityPlot extends RealtimeLineChartActivity {
         String[] legends;
         String ds = intent.getStringExtra("key");
         String pi = intent.getStringExtra("platformid");
-        if (!ds.equals(dataSource.getType()) || !pi.equals(dataSource.getPlatform().getId())) return;
+        if (!ds.equals(dataSource.getType()) || !pi.equals(dataSource.getPlatform().getId()))
+            return;
         getmChart().getDescription().setText(dataSource.getType());
         getmChart().getDescription().setPosition(1f, 1f);
         getmChart().getDescription().setEnabled(true);
         getmChart().getDescription().setTextColor(Color.WHITE);
-        if (ds.equals(DataSourceType.LED))
-            legends = new String[]{"LED 1", "LED 2", "LED 3"};
+        if (ds.equals(DataSourceType.ECG))
+            legends = new String[]{"ECG 1", "ECG 2", "ECG 3"};
         else if (ds.equals(DataSourceType.ACCELEROMETER)) {
             legends = new String[]{"Accelerometer X", "Accelerometer Y", "Accelerometer Z"};
-        } else if (ds.equals(DataSourceType.GYROSCOPE)) {
-            legends = new String[]{"Gyroscope X", "Gyroscope Y", "Gyroscope Z"};
+        } else if (ds.equals(DataSourceType.RESPIRATION)) {
+            legends = new String[]{"Respiration", "Respiration Offset"};
         } else legends = new String[]{ds};
         DataType data = intent.getParcelableExtra("data");
         if (data instanceof DataTypeFloat) {
@@ -85,6 +86,10 @@ public class ActivityPlot extends RealtimeLineChartActivity {
             double samples = ((DataTypeDouble) data).getSample();
             sample = new float[]{(float) samples};
         }
+        if (ds.equals(DataSourceType.RESPIRATION)) {
+//            sample[1]=sample[0];
+        }
+
         addEntry(sample, legends, 600);
     }
 

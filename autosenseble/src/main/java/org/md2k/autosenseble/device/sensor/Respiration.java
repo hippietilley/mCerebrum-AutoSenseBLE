@@ -28,8 +28,8 @@ import org.md2k.datakitapi.source.datasource.DataSource;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class Gyroscope extends Sensor {
-    public Gyroscope(DataSource dataSource) {
+public class Respiration extends Sensor {
+    public Respiration(DataSource dataSource) {
         super(dataSource);
     }
 }

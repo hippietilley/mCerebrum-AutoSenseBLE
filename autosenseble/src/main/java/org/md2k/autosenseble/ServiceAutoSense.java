@@ -104,7 +104,6 @@ public class ServiceAutoSense extends Service {
         if (readSettings())
             connectDataKit();
         else {
-            showAlertDialogConfiguration(this);
             stopSelf();
         }
     }
@@ -168,21 +167,6 @@ public class ServiceAutoSense extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-
-    void showAlertDialogConfiguration(final Context context) {
-/*
-        AlertDialogs.AlertDialog(this, "Error: MotionSense Settings", "Please configure MotionSense", R.drawable.ic_error_red_50dp, "Settings", "Cancel", null, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if (which == AlertDialog.BUTTON_POSITIVE) {
-                    Intent intent = new Intent(context, ActivitySettings.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(intent);
-                }
-            }
-        });
-*/
-    }
 
     private BroadcastReceiver mMessageReceiverStop = new BroadcastReceiver() {
         @Override

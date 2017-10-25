@@ -1,0 +1,247 @@
+[
+  {
+    "type": "BATTERY",
+    "application": {
+      "id": "org.md2k.autosenseble",
+      "metadata": {
+        "NAME": "AutoSenseBLE",
+        "DESCRIPTION": "Collects data from the motion sense. Sensors supported: [Accelerometer, Respiration, ECG]"
+      }
+    },
+    "dataDescriptors": [
+      {
+        "DATA_TYPE": "double",
+        "NAME": "Battery Level",
+        "DESCRIPTION": "current battery charge",
+        "MAX_VALUE": "100",
+        "MIN_VALUE": "0",
+        "UNIT": "percentage"
+      }
+    ],
+    "platform": {
+      "metadata": {
+        "NAME": "AutoSenseBLE"
+      },
+      "type": "AUTOSENSE_BLE"
+    },
+    "metadata": {
+      "DATA_TYPE": "org.md2k.datakitapi.datatype.DataTypeDoubleArray",
+      "NAME": "Battery",
+      "DESCRIPTION": "Current battery level as a percentage from 0%% to 100%%"
+    }
+  },
+  {
+    "type": "RAW",
+    "application": {
+      "id": "org.md2k.autosenseble",
+      "metadata": {
+        "NAME": "AutoSenseBLE",
+        "DESCRIPTION": "Collects data from the motion sense. Sensors supported: [Accelerometer, Respiration, ECG]"
+      }
+    },
+    "dataDescriptors": [
+      {
+        "DATA_TYPE": "double",
+        "NAME": "Raw Data",
+        "DESCRIPTION": "Raw byte array",
+        "MAX_VALUE": "100",
+        "MIN_VALUE": "0",
+        "UNIT": "percentage"
+      }
+    ],
+    "platform": {
+      "metadata": {
+        "NAME": "AutoSenseBLE"
+      },
+      "type": "AUTOSENSE_BLE"
+    },
+    "metadata": {
+      "DATA_TYPE": "org.md2k.datakitapi.datatype.DataTypeDoubleArray",
+      "NAME": "Raw",
+      "DESCRIPTION": "Raw byte array"
+    }
+  },
+  {
+    "type": "ACCELEROMETER",
+    "application": {
+      "id": "org.md2k.autosenseble",
+      "metadata": {
+        "NAME": "AutoSenseBLE",
+        "DESCRIPTION": "Collects data from the motion sense. Sensors supported: [Accelerometer, Respiration, ECG]"
+      }
+    },
+    "dataDescriptors": [
+      {
+        "DATA_TYPE": "double",
+        "NAME": "Accelerometer X",
+        "DESCRIPTION": "Acceleration minus Gx on the x-axis",
+        "FREQUENCY": "16",
+        "MAX_VALUE": "+2",
+        "MIN_VALUE": "-2",
+        "UNIT": "g"
+      },
+      {
+        "DATA_TYPE": "double",
+        "NAME": "Accelerometer Y",
+        "DESCRIPTION": "Acceleration minus Gy on the y-axis",
+        "FREQUENCY": "16",
+        "MAX_VALUE": "+2",
+        "MIN_VALUE": "-2",
+        "UNIT": "g"
+      },
+      {
+        "DATA_TYPE": "double",
+        "NAME": "Accelerometer Z",
+        "DESCRIPTION": "Acceleration minus Gz on the z-axis",
+        "FREQUENCY": "16",
+        "MAX_VALUE": "+2",
+        "MIN_VALUE": "-2",
+        "UNIT": "g"
+      }
+    ],
+    "platform": {
+      "metadata": {
+        "NAME": "AutoSenseBLE"
+      },
+      "type": "AUTOSENSE_BLE"
+    },
+    "metadata": {
+      "DATA_TYPE": "org.md2k.datakitapi.datatype.DataTypeDoubleArray",
+      "NAME": "Accelerometer",
+      "DESCRIPTION": "measures the acceleration applied to the device",
+      "FREQUENCY": "16",
+      "UNIT": "g",
+      "INDEX_DESCRIPTION": "0-x, 1-y, 2-z"
+    }
+  },
+  {
+    "type": "DATA_QUALITY",
+    "id": "ACCELEROMETER",
+    "application": {
+      "id": "org.md2k.autosenseble",
+      "metadata": {
+        "NAME": "AutoSenseBLE",
+        "DESCRIPTION": "Collects data from the motion sense. Sensors supported: [Accelerometer, Respiration, ECG]"
+      }
+    },
+    "dataDescriptors": [
+      {
+        "DATA_TYPE": "int",
+        "NAME": "Data Quality (Accelerometer)",
+        "DESCRIPTION": "measures the Data Quality of Accelerometer. Values= GOOD(0), BAND_OFF(1), NOT_WORN(2), BAND_LOOSE(3), NOISE(4)",
+        "FREQUENCY": "0.33",
+        "MAX_VALUE": "4",
+        "MIN_VALUE": "0"
+      }
+    ],
+    "platform": {
+      "metadata": {
+        "NAME": "AutoSenseBLE"
+      },
+      "type": "AUTOSENSE_BLE"
+    },
+    "metadata": {
+      "DATA_TYPE": "org.md2k.datakitapi.datatype.DataTypeInt",
+      "NAME": "Data Quality (Accelerometer)",
+      "DESCRIPTION": "measures the Data Quality of Accelerometer. Values= GOOD(0), BAND_OFF(1), NOT_WORN(2), BAND_LOOSE(3), NOISE(4)",
+      "FREQUENCY": "0.33"
+    }
+  },
+  {
+    "type": "RESPIRATION",
+    "application": {
+      "id": "org.md2k.autosenseble",
+      "metadata": {
+        "NAME": "AutoSenseBLE",
+        "DESCRIPTION": "Collects data from the motion sense. Sensors supported: [Accelerometer, Respiration, ECG]"
+      }
+    },
+    "dataDescriptors": [
+      {
+        "DATA_TYPE": "double",
+        "NAME": "Respiration",
+        "DESCRIPTION": "Respiration",
+        "FREQUENCY": "25"
+      },
+      {
+        "DATA_TYPE": "double",
+        "NAME": "Respiration offset",
+        "DESCRIPTION": "Respiration offset",
+        "FREQUENCY": "25"
+      }
+    ],
+    "platform": {
+      "metadata": {
+        "NAME": "AutoSenseBLE"
+      },
+      "type": "AUTOSENSE_BLE"
+    },
+    "metadata": {
+      "DATA_TYPE": "org.md2k.datakitapi.datatype.DataTypeDoubleArray",
+      "NAME": "Respiration",
+      "DESCRIPTION": "measures the respiratory signals",
+      "FREQUENCY": "25"
+    }
+  },
+  {
+    "type": "ECG",
+    "application": {
+      "id": "org.md2k.autosenseble",
+      "metadata": {
+        "NAME": "AutoSenseBLE",
+        "DESCRIPTION": "Collects data from the motion sense. Sensors supported: [Accelerometer, Respiration, ECG]"
+      }
+    },
+    "dataDescriptors": [
+      {
+        "DATA_TYPE": "double",
+        "NAME": "ECG",
+        "DESCRIPTION": "ECG",
+        "FREQUENCY": "100"
+      }
+    ],
+    "platform": {
+      "metadata": {
+        "NAME": "AutoSenseBLE"
+      },
+      "type": "AUTOSENSE_BLE"
+    },
+    "metadata": {
+      "DATA_TYPE": "org.md2k.datakitapi.datatype.DataTypeDoubleArray",
+      "NAME": "ECG",
+      "DESCRIPTION": "measures the ECG signals",
+      "FREQUENCY": "100"
+    }
+  },
+  {
+    "type": "SEQUENCE_NUMBER",
+    "application": {
+      "id": "org.md2k.autosenseble",
+      "metadata": {
+        "NAME": "AutoSenseBLE",
+        "DESCRIPTION": "Collects data from the motion sense. Sensors supported: [Accelerometer, Respiration, ECG]"
+      }
+    },
+    "dataDescriptors": [
+      {
+        "DATA_TYPE": "double",
+        "NAME": "Sequence number",
+        "DESCRIPTION": "Sequence number of the packet",
+        "MAX_VALUE": "65535",
+        "MIN_VALUE": "0",
+        "UNIT": "number"
+      }
+    ],
+    "platform": {
+      "metadata": {
+        "NAME": "AutoSenseBLE"
+      },
+      "type": "AUTOSENSE_BLE"
+    },
+    "metadata": {
+      "DATA_TYPE": "org.md2k.datakitapi.datatype.DataTypeDoubleArray",
+      "NAME": "Sequence Number",
+      "DESCRIPTION": "Sequence number of the packet"
+    }
+  }
+]

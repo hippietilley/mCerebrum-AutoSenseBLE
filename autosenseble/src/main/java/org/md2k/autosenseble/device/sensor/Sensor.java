@@ -43,16 +43,12 @@ abstract public class Sensor {
     private DataSource dataSource;
     DataSourceClient dataSourceClient;
     public static final String KEY_ACCELEROMETER=DataSourceType.ACCELEROMETER;
-    public static final String KEY_GYROSCOPE=DataSourceType.GYROSCOPE;
+    public static final String KEY_RESPIRATION=DataSourceType.RESPIRATION;
+    public static final String KEY_ECG=DataSourceType.ECG;
     public static final String KEY_BATTERY=DataSourceType.BATTERY;
-    public static final String KEY_LED=DataSourceType.LED;
     public static final String KEY_RAW=DataSourceType.RAW;
     public static final String KEY_SEQUENCE_NUMBER=DataSourceType.SEQUENCE_NUMBER;
     public static final String KEY_DATA_QUALITY_ACCELEROMETER=DataSourceType.DATA_QUALITY+DataSourceType.ACCELEROMETER;
-    public static final String KEY_DATA_QUALITY_LED=DataSourceType.DATA_QUALITY+DataSourceType.LED;
-
-
-
 
     public Sensor(DataSource dataSource) {
         this.dataSource=dataSource;
@@ -93,13 +89,12 @@ abstract public class Sensor {
     public static Sensor create(DataSource dataSource){
         switch(getKey(dataSource)){
             case KEY_ACCELEROMETER: return new Accelerometer(dataSource);
-            case KEY_GYROSCOPE: return new Gyroscope(dataSource);
+            case KEY_RESPIRATION: return new Respiration(dataSource);
             case KEY_BATTERY: return new Battery(dataSource);
-            case KEY_LED: return new LED(dataSource);
+            case KEY_ECG: return new ECG(dataSource);
             case KEY_RAW: return new Raw(dataSource);
             case KEY_SEQUENCE_NUMBER: return new SequenceNumber(dataSource);
             case KEY_DATA_QUALITY_ACCELEROMETER: return new DataQualityAccelerometer(dataSource);
-            case KEY_DATA_QUALITY_LED: return new DataQualityLed(dataSource);
             default:
                 return null;
         }
@@ -109,12 +104,12 @@ abstract public class Sensor {
         switch (dataSource.getType()) {
             case DataSourceType.ACCELEROMETER:
                 return KEY_ACCELEROMETER;
-            case DataSourceType.GYROSCOPE:
-                return KEY_GYROSCOPE;
+            case DataSourceType.RESPIRATION:
+                return KEY_RESPIRATION;
             case DataSourceType.BATTERY:
                 return KEY_BATTERY;
-            case DataSourceType.LED:
-                return KEY_LED;
+            case DataSourceType.ECG:
+                return KEY_ECG;
             case DataSourceType.RAW:
                 return KEY_RAW;
             case DataSourceType.SEQUENCE_NUMBER:
@@ -122,8 +117,6 @@ abstract public class Sensor {
             case DataSourceType.DATA_QUALITY:
                 if (dataSource.getId() != null && dataSource.getId().equals(DataSourceType.ACCELEROMETER))
                     return KEY_DATA_QUALITY_ACCELEROMETER;
-                else if (dataSource.getId() != null && dataSource.getId().equals(DataSourceType.LED))
-                    return KEY_DATA_QUALITY_LED;
                 else if(dataSource.getId()==null) return KEY_DATA_QUALITY_ACCELEROMETER;
             default:
                 return null;

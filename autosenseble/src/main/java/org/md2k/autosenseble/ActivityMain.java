@@ -66,7 +66,7 @@ import java.util.Locale;
  */
 
 public class ActivityMain extends AppCompatActivity {
-    public static final String INTENT_NAME = "motionsense_data";
+    public static final String INTENT_NAME = "data";
     public static final int OPERATION_RUN = 0;
     public static final int OPERATION_SETTINGS = 1;
     public static final int OPERATION_PLOT = 2;
@@ -171,7 +171,7 @@ public class ActivityMain extends AppCompatActivity {
         @Override
         public void run() {
             {
-                long time = AppInfo.serviceRunningTime(ActivityMain.this, Constants.SERVICE_NAME);
+                long time = AppInfo.serviceRunningTime(ActivityMain.this, ServiceAutoSense.class.getName());
                 if (time < 0) {
                     ((Button) findViewById(R.id.button_app_status)).setText("START");
                     findViewById(R.id.button_app_status).setBackground(ContextCompat.getDrawable(ActivityMain.this, R.drawable.button_status_off));

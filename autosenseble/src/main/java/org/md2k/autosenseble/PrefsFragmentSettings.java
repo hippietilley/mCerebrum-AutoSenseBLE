@@ -65,8 +65,9 @@ public class PrefsFragmentSettings extends PreferenceFragment {
         addPreferencesFromResource(R.xml.pref_settings);
         setPreferenceScreenConfigured();
     }
+
     @Override
-    public void onResume(){
+    public void onResume() {
         scan();
         super.onResume();
     }
@@ -100,7 +101,7 @@ public class PrefsFragmentSettings extends PreferenceFragment {
                     return;
                 if (deviceManager.isConfigured(scanResult.getBleDevice().getMacAddress())) return;
                 if (deviceManager.isAutoSense(name))
-                    addToPreferenceScreenAvailable(PlatformType.AUTOSENSE_CHEST, scanResult.getBleDevice().getMacAddress());
+                    addToPreferenceScreenAvailable(PlatformType.AUTOSENSE_BLE, scanResult.getBleDevice().getMacAddress());
             }
         });
     }
@@ -113,10 +114,7 @@ public class PrefsFragmentSettings extends PreferenceFragment {
             preference.setKey(deviceManager.get(i).getDeviceId());
             preference.setTitle(deviceManager.get(i).getId());
             preference.setSummary(deviceManager.get(i).getType() + " (" + deviceManager.get(i).getDeviceId() + ")");
-            if (deviceManager.get(i).getType().equals(PlatformType.MOTION_SENSE_HRV))
-                preference.setIcon(R.drawable.ic_watch_heart);
-            else
-                preference.setIcon(R.drawable.ic_watch);
+            preference.setIcon(R.drawable.ic_chest_teal_48dp);
             preference.setOnPreferenceClickListener(preferenceListenerConfigured());
             category.addPreference(preference);
         }
@@ -138,10 +136,7 @@ public class PrefsFragmentSettings extends PreferenceFragment {
         listPreference.setKey(deviceId);
         listPreference.setTitle(deviceId);
         listPreference.setSummary(type);
-        if (type.equals(PlatformType.MOTION_SENSE_HRV))
-            listPreference.setIcon(R.drawable.ic_watch_heart);
-        else
-            listPreference.setIcon(R.drawable.ic_watch);
+            listPreference.setIcon(R.drawable.ic_chest_teal_48dp);
         listPreference.setOnPreferenceChangeListener((preference, newValue) -> {
             if (deviceManager.isConfigured(newValue.toString(), preference.getKey()))
                 Toast.makeText(getActivity(), "Device: " + preference.getKey() + "and/or Placement:" + newValue.toString() + " already configured", Toast.LENGTH_LONG).show();
@@ -195,8 +190,8 @@ public class PrefsFragmentSettings extends PreferenceFragment {
     }
 
     @Override
-    public void onPause(){
-        if(scanSubscription!=null && !scanSubscription.isUnsubscribed())
+    public void onPause() {
+        if (scanSubscription != null && !scanSubscription.isUnsubscribed())
             scanSubscription.unsubscribe();
         super.onPause();
     }
