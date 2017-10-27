@@ -1,0 +1,213 @@
+package org.md2k.autosenseble.data_quality;
+
+import org.md2k.mcerebrum.core.data_format.DATA_QUALITY;
+
+import java.util.Arrays;
+
+/*
+ * Copyright (c) 2016, The University of Memphis, MD2K Center
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+public class RIPQualityCalculation {
+    // ===========================================================
+    private static final int BUFF_LENGTH = 5;
+    // ========
+    private static final int ACCEPTABLE_OUTLIER_PERCENT = 34;
+    private static final int OUTLIER_THRESHOLD_HIGH = 4000;
+    private static final int OUTLIER_THRESHOLD_LOW = 20;
+    private static final int BAD_SEGMENTS_THRESHOLD = 2;
+    private static final int SLOPE_THRESHOLD = 300;
+    private static final int RANGE_THRESHOLD = 200;
+    public final static double MINIMUM_EXPECTED_SAMPLES = 3 * (0.33) * 21.33;  //33% of a 3 second window with 10.33 sampling frequency
+    //	private final static int RIP_THRESHOLD_BAND_LOOSE = 150;
+//	private final static int RIP_THRESHOLD_BAND_OFF = 20;
+    private final static int RIP_THRESHOLD_BAND_LOOSE = 175;
+    private final static int RIP_THRESHOLD_BAND_OFF = 20;
+    private static final String TAG = "RipQualityCalculation";
+    private static int[] envelBuff;
+    private static int envelHead;
+    private static int[] classBuff;
+    private static int classHead;
+    // ========
+
+    private static int segment_class = 0;
+    private static int[] outlierCounts;
+    // ========
+    private static int SEGMENT_GOOD = 0;
+    private static int SEGMENT_BAD = 1;
+    // ========
+    private static int bad_segments = 0;
+    private static int amplitude_small = 0;
+    private static int amplitude_very_small = 0;
+
+    // ===========================================================
+
+
+    // ===========================================================
+    public RIPQualityCalculation() {
+        // ===========================================================
+        //if(Log.DEBUG) Log.d(TAG,"starting");
+        envelBuff = new int[BUFF_LENGTH];
+        classBuff = new int[BUFF_LENGTH];
+        for (int i = 0; i < BUFF_LENGTH; i++) {
+            envelBuff[i] = 2 * RIP_THRESHOLD_BAND_LOOSE;
+            classBuff[i] = 0;
+        }
+        envelHead = 0;
+    }
+
+    // getting the maximum value
+    public static int getMaxValue(int[] array) {
+        int maxValue = array[0];
+        for (int i = 1; i < array.length; i++) {
+            if (array[i] > maxValue) {
+                maxValue = array[i];
+
+            }
+        }
+        return maxValue;
+    }
+
+    // getting the miniumum value
+    public static int getMinValue(int[] array) {
+        int minValue = array[0];
+        for (int i = 1; i < array.length; i++) {
+
+            if (array[i] < minValue) {
+                minValue = array[i];
+            }
+        }
+        return minValue;
+    }
+
+    //getting first difference
+    public static int[] getFirstDiff(int[] array) {
+        int[] diff = new int[array.length - 1];
+
+        for (int i = 1; i < array.length; i++) {
+            diff[i - 1] = Math.abs(array[i] - array[i - 1]);
+        }
+        return diff;
+    }
+
+    //getting median of an array
+    public static float getMedian(int[] m) {
+        //sort the array
+        Arrays.sort(m);
+        int middle = m.length / 2;
+        if (m.length % 2 == 1) {
+            return m[middle];
+        } else {
+            return (m[middle - 1] + m[middle]) / 2;
+        }
+    }
+
+    // ===========================================================
+    private void classifyDataPoints(int[] data) {
+        // ===========================================================
+        // index 0 = outlier sum, index 1 = max value,index 2 = min value
+        outlierCounts[0] = 0;
+        outlierCounts[1] = (int)data[0];
+        outlierCounts[2] = (int)data[0];
+        for(int i=0;i<data.length;i++){
+            int im=((i==0)?(data.length-1):(i-1));
+            int ip=((i==data.length-1)?(0):(i+1));
+            boolean stuck=((data[i]==data[im])&&(data[i]==data[ip]));
+            boolean flip=((Math.abs(data[i]-data[im])>((int)(OUTLIER_THRESHOLD_HIGH)))||(Math.abs(data[i]-data[ip])>((int)(OUTLIER_THRESHOLD_HIGH))));
+            boolean disc=((Math.abs(data[i]-data[im])>((int)(SLOPE_THRESHOLD)))&& (Math.abs(data[i]-data[ip])>((int)(SLOPE_THRESHOLD))));
+            if(disc) outlierCounts[0]++;
+            else if(stuck) outlierCounts[0]++;
+            else if(flip) outlierCounts[0]++;
+            else if(data[i] >= OUTLIER_THRESHOLD_HIGH){
+                outlierCounts[0]++;
+            }else if(data[i] <= OUTLIER_THRESHOLD_LOW){
+                outlierCounts[0]++;
+            }else{
+                if(data[i] > outlierCounts[1]) outlierCounts[1]=(int)data[i];
+                if(data[i] < outlierCounts[2]) outlierCounts[2]=(int)data[i];
+            }
+        }
+
+    }
+
+    // ===========================================================
+    private void classifySegment(int[] data) {
+        // ===========================================================
+        if (100 * outlierCounts[0] > ACCEPTABLE_OUTLIER_PERCENT * data.length) {
+            segment_class = SEGMENT_BAD;
+        } else {
+            segment_class = SEGMENT_GOOD;
+        }
+    }
+
+    // ===========================================================
+    private void classifyBuffer() {
+        // ===========================================================
+        bad_segments = 0;
+        amplitude_small = 0;
+        for (int i = 0; i < envelBuff.length; i++) {
+            if (envelBuff[i] < RIP_THRESHOLD_BAND_LOOSE) amplitude_small++;
+        }
+    }
+
+    // ===========================================================
+    public int currentQuality(int[] data) {
+        // ===========================================================
+        if(data.length==0) return DATA_QUALITY.BAND_OFF;
+        else  if(data.length<10) return DATA_QUALITY.MISSING;
+        //if(Log.DEBUG) Log.d("RipQualityCalculation","data "+data[0]+" "+data[1]+" "+data[2]+" "+data[3]+" "+data[4]);
+        classifyDataPoints(data);
+        classifySegment(data);
+        classBuff[(classHead++) % classBuff.length] = segment_class;
+        envelBuff[(envelHead++) % envelBuff.length] = outlierCounts[1] - outlierCounts[1];
+        //if(Log.DEBUG) Log.d("RipQualityCalculation","Amplitude "+(max_value-min_value));
+        classifyBuffer();
+        if (segment_class == SEGMENT_BAD) {
+            return DATA_QUALITY.NOT_WORN;
+            //}else if(2*amplitude_very_small>envelBuff.length){
+            //return DATA_QUALITY_BAND_OFF;
+        } else if (2 * amplitude_small > envelBuff.length) {
+            return DATA_QUALITY.BAND_LOOSE;
+        } else if((outlierCounts[1]-outlierCounts[2]) <= (int)(RIP_THRESHOLD_BAND_LOOSE)) {
+            return DATA_QUALITY.BAND_LOOSE;
+        }
+        //assume that 3 seconds data is received by the function. Total 3*21.33=64 samples
+        //return DATA_QUALITY_GOOD;
+        return DATA_QUALITY.GOOD;
+    }
+
+    private int fitler_bad_rip(int[] data) {
+        //we are supposed to receive data for 1 second = 64 samples
+        int max = getMaxValue(data);
+        int min = getMinValue(data);
+        int range = max - min;
+        int max_slope = getMaxValue(getFirstDiff(data));
+        if (min == 0 || max_slope > SLOPE_THRESHOLD || range < RANGE_THRESHOLD)
+            return DATA_QUALITY.BAND_LOOSE;
+        if (max > OUTLIER_THRESHOLD_HIGH)
+            return DATA_QUALITY.NOT_WORN;
+        return DATA_QUALITY.GOOD;
+    }
+}

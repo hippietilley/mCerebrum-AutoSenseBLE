@@ -44,6 +44,7 @@ abstract public class Sensor {
     DataSourceClient dataSourceClient;
     public static final String KEY_ACCELEROMETER=DataSourceType.ACCELEROMETER;
     public static final String KEY_RESPIRATION=DataSourceType.RESPIRATION;
+    public static final String KEY_RESPIRATION_BASELINE=DataSourceType.RESPIRATION_BASELINE;
     public static final String KEY_ECG=DataSourceType.ECG;
     public static final String KEY_BATTERY=DataSourceType.BATTERY;
     public static final String KEY_RAW=DataSourceType.RAW;
@@ -90,6 +91,7 @@ abstract public class Sensor {
         switch(getKey(dataSource)){
             case KEY_ACCELEROMETER: return new Accelerometer(dataSource);
             case KEY_RESPIRATION: return new Respiration(dataSource);
+            case KEY_RESPIRATION_BASELINE: return new RespirationBaseLine(dataSource);
             case KEY_BATTERY: return new Battery(dataSource);
             case KEY_ECG: return new ECG(dataSource);
             case KEY_RAW: return new Raw(dataSource);
@@ -106,6 +108,8 @@ abstract public class Sensor {
                 return KEY_ACCELEROMETER;
             case DataSourceType.RESPIRATION:
                 return KEY_RESPIRATION;
+            case DataSourceType.RESPIRATION_BASELINE:
+                return KEY_RESPIRATION_BASELINE;
             case DataSourceType.BATTERY:
                 return KEY_BATTERY;
             case DataSourceType.ECG:

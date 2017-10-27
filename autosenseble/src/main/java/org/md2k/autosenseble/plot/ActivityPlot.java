@@ -68,9 +68,7 @@ public class ActivityPlot extends RealtimeLineChartActivity {
             legends = new String[]{"ECG 1", "ECG 2", "ECG 3"};
         else if (ds.equals(DataSourceType.ACCELEROMETER)) {
             legends = new String[]{"Accelerometer X", "Accelerometer Y", "Accelerometer Z"};
-        } else if (ds.equals(DataSourceType.RESPIRATION)) {
-            legends = new String[]{"Respiration", "Respiration Offset"};
-        } else legends = new String[]{ds};
+        }  else legends = new String[]{ds};
         DataType data = intent.getParcelableExtra("data");
         if (data instanceof DataTypeFloat) {
             sample = new float[]{((DataTypeFloat) data).getSample()};
@@ -85,9 +83,6 @@ public class ActivityPlot extends RealtimeLineChartActivity {
         } else if (data instanceof DataTypeDouble) {
             double samples = ((DataTypeDouble) data).getSample();
             sample = new float[]{(float) samples};
-        }
-        if (ds.equals(DataSourceType.RESPIRATION)) {
-//            sample[1]=sample[0];
         }
 
         addEntry(sample, legends, 600);

@@ -286,17 +286,18 @@ public class Device{
 
     }
     private void insertData(long timestamp, byte[] data) {
-        DataTypeDoubleArray acl, respiration, ecg, raw, seq;
+        DataTypeDoubleArray acl, respiration, raw, seq, respirationBaseLine, ecg;
         double[] aclSample=Data.getAccelerometer(data);
         double[] ecgSample = Data.getECG(data);
         double[] respirationSample=Data.getRespiration(data);
+        double[] respirationBaseLineSample = Data.getRespirationBase(data);
         double[] seqSample= Data.getSequenceNumber(data);
         double[] rawSample=Data.getRawData(data);
 
 
         acl=new DataTypeDoubleArray(timestamp, aclSample);
-        ecg=new DataTypeDoubleArray(timestamp, ecgSample);
         respiration=new DataTypeDoubleArray(timestamp, respirationSample);
+        respirationBaseLine=new DataTypeDoubleArray(timestamp, respirationBaseLineSample);
         seq=new DataTypeDoubleArray(timestamp, seqSample);
         raw=new DataTypeDoubleArray(timestamp, rawSample);
 
@@ -311,36 +312,45 @@ public class Device{
             sensors.get(Sensor.KEY_RESPIRATION).insert(respiration);
             updateView(Sensor.KEY_RESPIRATION, respiration);
         }
+        if(sensors.get(Sensor.KEY_RESPIRATION_BASELINE)!=null) {
+            sensors.get(Sensor.KEY_RESPIRATION_BASELINE).insert(respirationBaseLine);
+            updateView(Sensor.KEY_RESPIRATION_BASELINE, respirationBaseLine);
+        }
+
         if(sensors.get(Sensor.KEY_ECG)!=null) {
             int seqInt= (int) seqSample[0];
             switch(seqInt%4){
-                case 0:
+  /*              case 0:
+                    if(ecgBuffer[1-1]!=-1) processECGData();
                     ecgBuffer[1-1]=ecgSample[0];
                     ecgBuffer[5-1]=ecgSample[1];
                     ecgBuffer[9-1]=ecgSample[2];
                     ecgBuffer[13-1]=ecgSample[3];
                     break;
                 case 1:
+                    if(ecgBuffer[2-1]!=-1) processECGData();
                     ecgBuffer[2-1]=ecgSample[0];
                     ecgBuffer[6-1]=ecgSample[1];
                     ecgBuffer[10-1]=ecgSample[2];
                     ecgBuffer[14-1]=ecgSample[3];
                     break;
                 case 2:
+                    if(ecgBuffer[3-1]!=-1) processECGData();
                     ecgBuffer[3-1]=ecgSample[0];
                     ecgBuffer[7-1]=ecgSample[1];
                     ecgBuffer[11-1]=ecgSample[2];
                     ecgBuffer[15-1]=ecgSample[3];
                     break;
-                case 3:
+  */              case 3:
+//                    if(ecgBuffer[4-1]!=-1) processECGData();
+/*
                     ecgBuffer[4-1]=ecgSample[0];
                     ecgBuffer[8-1]=ecgSample[1];
                     ecgBuffer[12-1]=ecgSample[2];
                     ecgBuffer[16-1]=ecgSample[3];
+*/
+                    ecg=new DataTypeDoubleArray(timestamp, new double[]{ecgSample[0]});
                     updateView(Sensor.KEY_ECG, ecg);
-                    for(int i=0;i<ecgBuffer.length;i++)
-                        ecgBuffer[i]=-1;
-                    timeStamplastECGSent=DateTime.getDateTime();
                     break;
             }
         }
@@ -354,4 +364,16 @@ public class Device{
             updateView(Sensor.KEY_SEQUENCE_NUMBER, seq);
         }
     }
+/*
+    void processECGData(){
+        for(int i=0;i<ecgBuffer.length;i++) {
+            if(ecgBuffer[i]!=-1)
+                updateView(Sensor.KEY_ECG, new DataTypeDoubleArray(DateTime.getDateTime(), new double[]{ecgBuffer[i]}));
+        }
+        for(int i=0;i<ecgBuffer.length;i++)
+            ecgBuffer[i]=-1;
+        timeStamplastECGSent=DateTime.getDateTime();
+
+    }
+*/
 }

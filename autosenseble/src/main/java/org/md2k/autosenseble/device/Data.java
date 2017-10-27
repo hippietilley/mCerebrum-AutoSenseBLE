@@ -59,17 +59,21 @@ class Data {
     }
 
     static double[] getRespiration(byte[] data) {
-        double[] sample = new double[2];
+        double[] sample = new double[1];
         int x=(data[14] & 0x00000000000000ff);
         int y=(data[13] & 0xf);
         int seq=(y<<8)+x;
 
+        sample[0] = seq;
+//        Log.d("abc","s="+sample[0]+" "+sample[1]);
+        return sample;
+    }
+    static double[] getRespirationBase(byte[] data) {
+        double[] sample = new double[1];
         int xo=((data[13] & 0xf0)>>4);
         int yo=(data[12] & 0x00000000000000ff);
         int seqO=(yo<<4)+xo;
-
-        sample[0] = seq;
-        sample[1] = seqO;
+        sample[0] = seqO;
 //        Log.d("abc","s="+sample[0]+" "+sample[1]);
         return sample;
     }
