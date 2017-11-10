@@ -68,6 +68,23 @@ public class Configuration {
     public static void write(String directory, String fileName, ArrayList<DataSource> dataSources) throws IOException {
         Storage.writeJsonArray(directory+fileName, dataSources);
     }
+    private static int getPlatformNo(ArrayList<DataSource> dataSources){
+        boolean flag;
+        ArrayList<String> d=new ArrayList<>();
+        for(int i=0;i<dataSources.size();i++){
+            String platformId = dataSources.get(i).getPlatform().getId();
+            flag=false;
+            for(int j=0;j<d.size();j++)
+                if(d.get(j).equalsIgnoreCase(platformId)) {
+                    flag=true;
+                    break;
+                }
+            if(!flag)
+                d.add(platformId);
+        }
+        return d.size();
+    }
+
     public static boolean isEqualDefault() {
         ArrayList<DataSource> dataSources;
         ArrayList<DataSource> dataSourcesDefault;
@@ -75,54 +92,7 @@ public class Configuration {
         dataSourcesDefault = read(CONFIG_DIRECTORY, DEFAULT_CONFIG_FILENAME);
         if(dataSourcesDefault==null) return true;
         if(dataSources==null) return false;
-        if (dataSources.size() != dataSourcesDefault.size()) return false;
-        if(dataSources.size()==0) return false;
-        for (int i = 0; i < dataSources.size(); i++) {
-            if (!isDataSourceMatch(dataSources.get(i), dataSourcesDefault))
-                return false;
-        }
+        if(getPlatformNo(dataSources)!=getPlatformNo(dataSourcesDefault)) return false;
         return true;
     }
-    private static boolean isDataSourceMatch(DataSource dataSource, ArrayList<DataSource> dataSourcesDefault){
-        for(int i=0;i<dataSourcesDefault.size();i++){
-            DataSource dataSourceDefault=dataSourcesDefault.get(i);
-            if(isEqualDataSource(dataSource, dataSourceDefault)) return true;
-        }
-        return false;
-    }
-    private static boolean isEqualDataSource(DataSource dataSource, DataSource dataSourceDefault){
-        if(!isFieldMatch(dataSource.getId(), dataSourceDefault.getId())) return false;
-        if(!isFieldMatch(dataSource.getType(), dataSourceDefault.getType())) return false;
-        if(!isMetaDataMatch(dataSource.getMetadata(), dataSourceDefault.getMetadata())) return false;
-        if(!isObjectMatch(dataSource.getPlatform(), dataSourceDefault.getPlatform())) return false;
-        if(!isObjectMatch(dataSource.getPlatformApp(), dataSourceDefault.getPlatformApp())) return false;
-        if(!isObjectMatch(dataSource.getApplication(), dataSourceDefault.getApplication())) return false;
-        return true;
-    }
-    private static boolean isObjectMatch(AbstractObject object, AbstractObject objectDefault){
-        if(objectDefault==null) return true;
-        if(object==null) return false;
-        if(!isFieldMatch(object.getId(), objectDefault.getId())) return false;
-        if(!isFieldMatch(object.getType(), objectDefault.getType())) return false;
-        return true;
-    }
-    private static boolean isFieldMatch(String value, String valueDefault){
-        if(valueDefault==null) return true;
-        if(value==null) return false;
-        if(value.equals(valueDefault)) return true;
-        return false;
-    }
-    private static boolean isMetaDataMatch(HashMap<String, String> metadata, HashMap<String, String> metadataDefault){
-        String valueDefault, value;
-        if(metadataDefault==null) return true;
-        if(metadata==null) return false;
-        for(String key:metadataDefault.keySet()){
-            if(!metadata.containsKey(key)) return false;
-            valueDefault=metadataDefault.get(key);
-            value=metadata.get(key);
-            if(!value.equals(valueDefault))return false;
-        }
-        return true;
-    }
-
 }

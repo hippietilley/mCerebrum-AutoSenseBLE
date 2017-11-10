@@ -11,6 +11,9 @@ import org.md2k.autosenseble.ActivityMain;
 import org.md2k.autosenseble.Constants;
 import org.md2k.autosenseble.MyApplication;
 import org.md2k.autosenseble.device.sensor.DataQualityAccelerometer;
+import org.md2k.autosenseble.device.sensor.DataQualityECG;
+import org.md2k.autosenseble.device.sensor.DataQualityRespiration;
+import org.md2k.autosenseble.device.sensor.ECG;
 import org.md2k.autosenseble.device.sensor.Sensor;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
@@ -68,8 +71,6 @@ public class Device{
     private long lastReceived=0;
     private static final long TIMEOUT_VALUE = 15000; //Second
     private static final int DELAY = 3000;
-    double[] ecgBuffer;
-    long timeStamplastECGSent;
 
     Device(Platform platform) {
         super();
@@ -107,6 +108,22 @@ public class Device{
         if(curDeviceId.equals(pDeviceId)) return true;
         return false;
     }
+    private void calculateDataQualityRespiration(){
+        DataQualityRespiration sensor = (DataQualityRespiration) sensors.get(Sensor.KEY_DATA_QUALITY_RESPIRATION);
+        if (sensor != null) {
+            DataTypeInt dataTypeInt = new DataTypeInt(DateTime.getDateTime(), sensor.getStatus());
+            sensor.insert(dataTypeInt);
+            updateView(Sensor.KEY_DATA_QUALITY_RESPIRATION, dataTypeInt);
+        }
+    }
+    private void calculateDataQualityECG(){
+        DataQualityECG sensor = (DataQualityECG) sensors.get(Sensor.KEY_DATA_QUALITY_ECG);
+        if (sensor != null) {
+            DataTypeInt dataTypeInt = new DataTypeInt(DateTime.getDateTime(), sensor.getStatus());
+            sensor.insert(dataTypeInt);
+            updateView(Sensor.KEY_DATA_QUALITY_ECG, dataTypeInt);
+        }
+    }
     private void calculateDataQualityAccelerometer(){
         DataQualityAccelerometer sensor = (DataQualityAccelerometer) sensors.get(Sensor.KEY_DATA_QUALITY_ACCELEROMETER);
         if (sensor != null) {
@@ -135,6 +152,8 @@ public class Device{
                     @Override
                     public void onNext(Long aLong) {
                         calculateDataQualityAccelerometer();
+                        calculateDataQualityECG();
+                        calculateDataQualityRespiration();
                     }
                 });
         subscriptionDeviceContinuous=Observable.interval(0, TIMEOUT_VALUE, TimeUnit.MILLISECONDS).map(new Func1<Long, Boolean>() {
@@ -303,6 +322,8 @@ public class Device{
 
         if(sensors.get(Sensor.KEY_DATA_QUALITY_ACCELEROMETER)!=null)
             ((DataQualityAccelerometer)sensors.get(Sensor.KEY_DATA_QUALITY_ACCELEROMETER)).add(aclSample[0]);
+        if(sensors.get(Sensor.KEY_DATA_QUALITY_RESPIRATION)!=null)
+            ((DataQualityRespiration)sensors.get(Sensor.KEY_DATA_QUALITY_RESPIRATION)).add(respirationSample[0]);
         if(sensors.get(Sensor.KEY_ACCELEROMETER)!=null) {
             sensors.get(Sensor.KEY_ACCELEROMETER).insert(acl);
             updateView(Sensor.KEY_ACCELEROMETER, acl);
@@ -319,39 +340,22 @@ public class Device{
 
         if(sensors.get(Sensor.KEY_ECG)!=null) {
             int seqInt= (int) seqSample[0];
-            switch(seqInt%4){
-  /*              case 0:
-                    if(ecgBuffer[1-1]!=-1) processECGData();
-                    ecgBuffer[1-1]=ecgSample[0];
-                    ecgBuffer[5-1]=ecgSample[1];
-                    ecgBuffer[9-1]=ecgSample[2];
-                    ecgBuffer[13-1]=ecgSample[3];
-                    break;
-                case 1:
-                    if(ecgBuffer[2-1]!=-1) processECGData();
-                    ecgBuffer[2-1]=ecgSample[0];
-                    ecgBuffer[6-1]=ecgSample[1];
-                    ecgBuffer[10-1]=ecgSample[2];
-                    ecgBuffer[14-1]=ecgSample[3];
-                    break;
-                case 2:
-                    if(ecgBuffer[3-1]!=-1) processECGData();
-                    ecgBuffer[3-1]=ecgSample[0];
-                    ecgBuffer[7-1]=ecgSample[1];
-                    ecgBuffer[11-1]=ecgSample[2];
-                    ecgBuffer[15-1]=ecgSample[3];
-                    break;
-  */              case 3:
-//                    if(ecgBuffer[4-1]!=-1) processECGData();
-/*
-                    ecgBuffer[4-1]=ecgSample[0];
-                    ecgBuffer[8-1]=ecgSample[1];
-                    ecgBuffer[12-1]=ecgSample[2];
-                    ecgBuffer[16-1]=ecgSample[3];
-*/
-                    ecg=new DataTypeDoubleArray(timestamp, new double[]{ecgSample[0]});
-                    updateView(Sensor.KEY_ECG, ecg);
-                    break;
+            ECG ecgSensor = (ECG) sensors.get(Sensor.KEY_ECG);
+            ArrayList<DataTypeDoubleArray> db=ecgSensor.pushOld(seqInt);
+            if(db!=null && db.size()!=0){
+                for(int i=0;i<db.size();i++) {
+                    if(sensors.get(Sensor.KEY_DATA_QUALITY_ECG)!=null)
+                        ((DataQualityECG)sensors.get(Sensor.KEY_DATA_QUALITY_ECG)).add(db.get(i).getSample()[0]);
+                    updateView(Sensor.KEY_ECG, db.get(i));
+                }
+            }
+            db = ecgSensor.add(seqInt, ecgSample);
+            if(db!=null && db.size()!=0){
+                for(int i=0;i<db.size();i++) {
+                    if(sensors.get(Sensor.KEY_DATA_QUALITY_ECG)!=null)
+                        ((DataQualityECG)sensors.get(Sensor.KEY_DATA_QUALITY_ECG)).add(db.get(i).getSample()[0]);
+                    updateView(Sensor.KEY_ECG, db.get(i));
+                }
             }
         }
 

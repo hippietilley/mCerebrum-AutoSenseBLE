@@ -232,6 +232,8 @@ public class ActivityMain extends AppCompatActivity {
                 TextView tvSensor = new TextView(this);
                 tvSensor.setPadding(5, 0, 0, 0);
                 String sname = deviceManager.get(i).getType().toLowerCase() + "(" + deviceManager.get(i).getId().substring(0, 1) + ")\n" + sensor.getDataSource().getType().toLowerCase();
+                if(sensor.getDataSource().getId()!=null)
+                    sname+="("+sensor.getDataSource().getId().charAt(0)+")";
                 tvSensor.setText(sname);
                 TextView tvCount = new TextView(this);
                 tvCount.setText("0");

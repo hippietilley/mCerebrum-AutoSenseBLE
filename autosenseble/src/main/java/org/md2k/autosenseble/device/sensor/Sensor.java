@@ -50,6 +50,8 @@ abstract public class Sensor {
     public static final String KEY_RAW=DataSourceType.RAW;
     public static final String KEY_SEQUENCE_NUMBER=DataSourceType.SEQUENCE_NUMBER;
     public static final String KEY_DATA_QUALITY_ACCELEROMETER=DataSourceType.DATA_QUALITY+DataSourceType.ACCELEROMETER;
+    public static final String KEY_DATA_QUALITY_RESPIRATION=DataSourceType.DATA_QUALITY+DataSourceType.RESPIRATION;
+    public static final String KEY_DATA_QUALITY_ECG=DataSourceType.DATA_QUALITY+DataSourceType.ECG;
 
     public Sensor(DataSource dataSource) {
         this.dataSource=dataSource;
@@ -97,6 +99,8 @@ abstract public class Sensor {
             case KEY_RAW: return new Raw(dataSource);
             case KEY_SEQUENCE_NUMBER: return new SequenceNumber(dataSource);
             case KEY_DATA_QUALITY_ACCELEROMETER: return new DataQualityAccelerometer(dataSource);
+            case KEY_DATA_QUALITY_RESPIRATION: return new DataQualityRespiration(dataSource);
+            case KEY_DATA_QUALITY_ECG: return new DataQualityECG(dataSource);
             default:
                 return null;
         }
@@ -121,6 +125,10 @@ abstract public class Sensor {
             case DataSourceType.DATA_QUALITY:
                 if (dataSource.getId() != null && dataSource.getId().equals(DataSourceType.ACCELEROMETER))
                     return KEY_DATA_QUALITY_ACCELEROMETER;
+                else if (dataSource.getId() != null && dataSource.getId().equals(DataSourceType.RESPIRATION))
+                    return KEY_DATA_QUALITY_RESPIRATION;
+                else if (dataSource.getId() != null && dataSource.getId().equals(DataSourceType.ECG))
+                    return KEY_DATA_QUALITY_ECG;
                 else if(dataSource.getId()==null) return KEY_DATA_QUALITY_ACCELEROMETER;
             default:
                 return null;

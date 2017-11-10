@@ -267,5 +267,75 @@
       "NAME": "Sequence Number",
       "DESCRIPTION": "Sequence number of the packet"
     }
+  },
+  {
+    "type": "DATA_QUALITY",
+    "id": "ECG",
+    "application": {
+      "id": "org.md2k.autosenseble",
+      "metadata": {
+        "NAME": "AutoSenseBLE",
+        "DESCRIPTION": "Collects data from the motion sense. Sensors supported: [Accelerometer, Respiration, ECG]"
+      }
+    },
+    "dataDescriptors": [
+      {
+        "DATA_TYPE": "int",
+        "NAME": "Data Quality - ECG",
+        "DESCRIPTION": "measures the Data Quality of ECG. Values=  GOOD(0), NOISE(1), BAD(2), BAND_OFF(3), MISSING(4), NOT_WORN(5), BAND_LOOSE(6)",
+        "MAX_VALUE": "6",
+        "MIN_VALUE": "0",
+        "FREQUENCY": ".33"
+      }
+    ],
+    "platform": {
+      "metadata": {
+        "NAME": "AutoSenseBLE"
+      },
+      "type": "AUTOSENSE_BLE"
+    },
+    "metadata": {
+      "DATA_TYPE": "org.md2k.datakitapi.datatype.DataTypeInt",
+      "NAME": "Data Quality - ECG",
+      "DESCRIPTION": "measures the Data Quality of ECG. Values=  GOOD(0), NOISE(1), BAD(2), BAND_OFF(3), MISSING(4), NOT_WORN(5), BAND_LOOSE(6)",
+      "MAX_VALUE": "6",
+      "MIN_VALUE": "0",
+      "FREQUENCY": ".33"
+    }
+  },
+  {
+    "type": "DATA_QUALITY",
+    "id": "RESPIRATION",
+    "application": {
+      "id": "org.md2k.autosenseble",
+      "metadata": {
+        "NAME": "AutoSenseBLE",
+        "DESCRIPTION": "Collects data from the motion sense. Sensors supported: [Accelerometer, Respiration, ECG]"
+      }
+    },
+    "dataDescriptors": [
+      {
+        "DATA_TYPE": "int",
+        "NAME": "Data Quality - Respiration",
+        "DESCRIPTION": "measures the Data Quality of Respiration. Values=  GOOD(0), NOISE(1), BAD(2), BAND_OFF(3), MISSING(4), NOT_WORN(5), BAND_LOOSE(6)",
+        "MAX_VALUE": "6",
+        "MIN_VALUE": "0",
+        "FREQUENCY": ".33"
+      }
+    ],
+    "platform": {
+      "metadata": {
+        "NAME": "AutoSenseBLE"
+      },
+      "type": "AUTOSENSE_BLE"
+    },
+    "metadata": {
+      "DATA_TYPE": "org.md2k.datakitapi.datatype.DataTypeInt",
+      "NAME": "Data Quality - ECG",
+      "DESCRIPTION": "measures the Data Quality of ECG. Values=  GOOD(0), NOISE(1), BAD(2), BAND_OFF(3), MISSING(4), NOT_WORN(5), BAND_LOOSE(6)",
+      "MAX_VALUE": "6",
+      "MIN_VALUE": "0",
+      "FREQUENCY": ".33"
+    }
   }
 ]

@@ -1,6 +1,8 @@
 package org.md2k.autosenseble.data_quality;
 
 
+import android.util.Log;
+
 import org.md2k.mcerebrum.core.data_format.DATA_QUALITY;
 
 import java.util.Arrays;
@@ -36,10 +38,10 @@ public class ECGQualityCalculation {
     private static final int BUFF_LENGTH = 3;
     // ========
     private static final int ACCEPTABLE_OUTLIER_PERCENT = 34;
-    private static final int OUTLIER_THRESHOLD_HIGH = 4000;
+    private static final int OUTLIER_THRESHOLD_HIGH = 60000;
     private static final int OUTLIER_THRESHOLD_LOW = 20;
     private static final int BAD_SEGMENTS_THRESHOLD = 2;
-    private static final int SLOPE_THRESHOLD = 100;
+    private static final int SLOPE_THRESHOLD = 1000;
     private static final int RANGE_THRESHOLD = 200;
     private final static int ECK_THRESHOLD_BAND_LOOSE = 100;
     public final static double MINIMUM_EXPECTED_SAMPLES = 3 * (0.33) * 64;  //33% of a 3 second window with 10.33 sampling frequency
@@ -129,9 +131,9 @@ public class ECGQualityCalculation {
             boolean stuck=((data[i]==data[im])&&(data[i]==data[ip]));
             boolean flip=((Math.abs(data[i]-data[im])>((int)(OUTLIER_THRESHOLD_HIGH)))||(Math.abs(data[i]-data[ip])>((int)(OUTLIER_THRESHOLD_HIGH))));
             boolean disc=((Math.abs(data[i]-data[im])>((int)(SLOPE_THRESHOLD)))&& (Math.abs(data[i]-data[ip])>((int)(SLOPE_THRESHOLD))));
-            if(disc) outlierCounts[0]++;
-            else if(stuck) outlierCounts[0]++;
-            else if(flip) outlierCounts[0]++;
+            if(disc){ outlierCounts[0]++;}
+            else if(stuck) {outlierCounts[0]++;}
+            else if(flip) {outlierCounts[0]++;}
             else if(data[i] >= OUTLIER_THRESHOLD_HIGH){
                 outlierCounts[0]++;
             }else if(data[i] <= OUTLIER_THRESHOLD_LOW){
@@ -185,10 +187,12 @@ public class ECGQualityCalculation {
         classifyBuffer();
 
         if (segment_class == SEGMENT_BAD) {
+            Log.d("abc","111111");
             return DATA_QUALITY.NOT_WORN;
             //}else if(2*amplitude_very_small>envelBuff.length){
             //return DATA_QUALITY_BAND_OFF;
         } else if (2 * amplitude_small > envelBuff.length) {
+            Log.d("abc","111111");
             return DATA_QUALITY.BAND_LOOSE;
         } else if((outlierCounts[1]-outlierCounts[2]) <= (int)(ECK_THRESHOLD_BAND_LOOSE)) {
             return DATA_QUALITY.BAND_LOOSE;

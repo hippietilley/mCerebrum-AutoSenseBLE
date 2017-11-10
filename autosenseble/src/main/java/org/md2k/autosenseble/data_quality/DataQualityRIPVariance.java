@@ -39,31 +39,11 @@ import java.util.HashMap;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class DataQualityRIPVariance extends DataQuality {
-    private static final String TAG = DataQualityRIPVariance.class.getSimpleName();
+public class DataQualityRIPVariance {
 
     private static final double RIP_VARIANCE_THRESHOLD = 1000;
 
-    public DataQualityRIPVariance(Context context) {
-        super(context);
-
-    }
-
-    public synchronized int getStatus() {
-        try {
-            int size = samples.size();
-            int samps[] = new int[size];
-            for (int i = 0; i < size; i++)
-                samps[i] = samples.get(i);
-            samples.clear();
-            int status = currentQuality(samps);
-            return status;
-        } catch (Exception e) {
-            return DATA_QUALITY.GOOD;
-        }
-    }
-
-    private int currentQuality(int[] samples) {
+    public int currentQuality(int[] samples) {
         if (samples.length == 0) {
             return DATA_QUALITY.BAND_OFF;
         }
@@ -93,30 +73,5 @@ public class DataQualityRIPVariance extends DataQuality {
             return DATA_QUALITY.NOT_WORN;
         }
         return DATA_QUALITY.GOOD;
-    }
-
-    public DataSourceBuilder createDatSourceBuilder(Platform platform) {
-        DataSourceBuilder dataSourceBuilder = new DataSourceBuilder();
-        dataSourceBuilder = dataSourceBuilder.setId(DataSourceType.RESPIRATION).setType(DataSourceType.DATA_VARIANCE).setPlatform(platform);
-        dataSourceBuilder = dataSourceBuilder.setDataDescriptors(createDataDescriptors());
-        dataSourceBuilder = dataSourceBuilder.setMetadata(METADATA.FREQUENCY, String.valueOf(1.0 / 3.0) + " Hz");
-        dataSourceBuilder = dataSourceBuilder.setMetadata(METADATA.NAME, "DataQuality-RIP-Variance");
-        dataSourceBuilder = dataSourceBuilder.setMetadata(METADATA.UNIT, "");
-        dataSourceBuilder = dataSourceBuilder.setMetadata(METADATA.DESCRIPTION, "measures the Data Variance of Respiration. Values=" + DATA_QUALITY.METADATA_STR);
-        dataSourceBuilder = dataSourceBuilder.setMetadata(METADATA.DATA_TYPE, DataTypeInt.class.getName());
-        return dataSourceBuilder;
-    }
-
-    public ArrayList<HashMap<String, String>> createDataDescriptors() {
-        ArrayList<HashMap<String, String>> dataDescriptors = new ArrayList<>();
-        HashMap<String, String> dataDescriptor = new HashMap<>();
-        dataDescriptor.put(METADATA.NAME, "DataQuality-Variance");
-        dataDescriptor.put(METADATA.MIN_VALUE, String.valueOf(0));
-        dataDescriptor.put(METADATA.MAX_VALUE, String.valueOf(1));
-        dataDescriptor.put(METADATA.FREQUENCY, String.valueOf(1.0 / 3.0) + " Hz");
-        dataDescriptor.put(METADATA.DESCRIPTION, "measures the Data Variance of Respiration. Values=GOOD(0), BAD(1), NODATA(2)");
-        dataDescriptor.put(METADATA.DATA_TYPE, int.class.getName());
-        dataDescriptors.add(dataDescriptor);
-        return dataDescriptors;
     }
 }

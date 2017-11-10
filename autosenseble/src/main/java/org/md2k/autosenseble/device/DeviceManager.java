@@ -55,11 +55,15 @@ public class DeviceManager {
     }
     public void add(String type, String id, String deviceId){
         ArrayList<DataSource> dataSources;
+        dataSources=metaData.getDataSources(type);
+
+/*
         if(hasDefault() && devicesDefault.getDataSources(type, id).size()!=0){
             dataSources=devicesDefault.getDataSources(type,id);
         }else{
             dataSources=metaData.getDataSources(type);
         }
+*/
         for(int i=0;i<dataSources.size();i++) {
             DataSource temp=metaData.getDataSource(dataSources.get(i).getType(), dataSources.get(i).getId(), dataSources.get(i).getPlatform().getType());
             Platform platform=new PlatformBuilder(temp.getPlatform()).setType(type).setId(id).setMetadata(METADATA.DEVICE_ID, deviceId).build();
