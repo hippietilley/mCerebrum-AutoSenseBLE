@@ -55,7 +55,7 @@ class Data {
         seq=(y<<8)+x;
         d[3]=seq;
         return d;
-
+// TODO: fix range ecg  range from 0 to 1
     }
 
     static double[] getRespiration(byte[] data) {
@@ -66,6 +66,8 @@ class Data {
 
         sample[0] = seq;
 //        Log.d("abc","s="+sample[0]+" "+sample[1]);
+        // TODO: fix range respiration range from 0 to 1
+
         return sample;
     }
     static double[] getRespirationBase(byte[] data) {
@@ -83,7 +85,8 @@ class Data {
     }
 
     private static double convertAccelADCtoSI(double x) {
-        return 1.0 * x / 16384;
+        // TODO: fix accelerometer range
+        return 2.0 * x / 16384;
     }
 
 
