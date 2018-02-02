@@ -1,4 +1,4 @@
-package org.md2k.autosenseble.device.sensor;
+package org.md2k.autosenseble.data_quality;
 
 import android.util.Log;
 

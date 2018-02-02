@@ -1,38 +1,26 @@
 package org.md2k.autosenseble.device;
 
-import android.bluetooth.BluetoothDevice;
-import android.content.Intent;
-import android.support.v4.content.LocalBroadcastManager;
+import android.content.Context;
 import android.util.Log;
 
+import com.polidea.rxandroidble.RxBleConnection;
 import com.polidea.rxandroidble.RxBleDevice;
 
-import org.md2k.autosenseble.ActivityMain;
-import org.md2k.autosenseble.Constants;
+import org.md2k.autosenseble.Data;
 import org.md2k.autosenseble.MyApplication;
-import org.md2k.autosenseble.device.sensor.DataQualityAccelerometer;
-import org.md2k.autosenseble.device.sensor.DataQualityECG;
-import org.md2k.autosenseble.device.sensor.DataQualityRespiration;
-import org.md2k.autosenseble.device.sensor.ECG;
-import org.md2k.autosenseble.device.sensor.Sensor;
-import org.md2k.datakitapi.datatype.DataType;
-import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
-import org.md2k.datakitapi.datatype.DataTypeInt;
-import org.md2k.datakitapi.exception.DataKitException;
-import org.md2k.datakitapi.source.METADATA;
-import org.md2k.datakitapi.source.datasource.DataSource;
-import org.md2k.datakitapi.source.platform.Platform;
-import org.md2k.datakitapi.time.DateTime;
+import org.md2k.autosenseble.BLEPair;
+import org.md2k.autosenseble.ReceiveCallback;
+
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import rx.BackpressureOverflow;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 /**
  * Copyright (c) 2015, The University of Memphis, MD2K Center
@@ -60,324 +48,166 @@ import rx.functions.Func1;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class Device{
-    private Platform platform;
-    HashMap<String, Sensor> sensors;
-    private Subscription subscriptionDevice;
-    private Subscription subscriptionDataQuality;
-    private Subscription subscriptionDeviceContinuous;
-    private HashMap<String, Integer> hm = new HashMap<>();
-    private long startTimestamp = 0;
-    private long lastReceived=0;
-    private static final long TIMEOUT_VALUE = 15000; //Second
-    private static final int DELAY = 3000;
+public abstract class Device {
+    public static final String UUID = "0000180f-0000-1000-8000-00805f9b34fb";
 
-    Device(Platform platform) {
-        super();
-        this.platform = platform;
-        sensors = new HashMap<>();
+    private String deviceId;
+    protected ArrayList<Sensor> sensors;
+    private Subscription subscriptionConnect;
+    private Subscription subscriptionRetryConnect;
+    private boolean isConnected;
+
+    protected Device(String deviceId) {
+        this.deviceId = deviceId;
+        sensors = new ArrayList<>();
+        isConnected = false;
     }
 
-    public void add(DataSource dataSource) {
-        if (sensors.get(Sensor.getKey(dataSource)) != null) return;
-        Sensor sensor = Sensor.create(dataSource);
-        if (sensor != null)
-            sensors.put(Sensor.getKey(dataSource), sensor);
+    String getDeviceId() {
+        return deviceId;
     }
 
-    boolean equals(Platform platform) {
-
-        if (getId() == null && platform.getId() != null) return false;
-        if (getId() != null && platform.getId() == null) return false;
-        if (getId() != null && platform.getId() != null && !getId().equals(platform.getId()))
-            return false;
-
-        if (getType() == null && platform.getType() != null) return false;
-        if (getType() != null && platform.getType() == null) return false;
-        if (getType() != null && platform.getType() != null && !getType().equals(platform.getType()))
-            return false;
-
-        String curDeviceId=getDeviceId();
-        String pDeviceId=null;
-        if(platform.getMetadata()!=null && platform.getMetadata().get(METADATA.DEVICE_ID)!=null)
-            pDeviceId=platform.getMetadata().get(METADATA.DEVICE_ID);
-
-        if(curDeviceId==null && pDeviceId==null) return true;
-        if(curDeviceId!=null && pDeviceId==null) return false;
-        if(curDeviceId==null && pDeviceId!=null) return false;
-        if(curDeviceId.equals(pDeviceId)) return true;
-        return false;
+    void add(Sensor sensor) {
+        sensors.add(sensor);
     }
-    private void calculateDataQualityRespiration(){
-        DataQualityRespiration sensor = (DataQualityRespiration) sensors.get(Sensor.KEY_DATA_QUALITY_RESPIRATION);
-        if (sensor != null) {
-            DataTypeInt dataTypeInt = new DataTypeInt(DateTime.getDateTime(), sensor.getStatus());
-            sensor.insert(dataTypeInt);
-            updateView(Sensor.KEY_DATA_QUALITY_RESPIRATION, dataTypeInt);
+
+    protected ArrayList<Sensor> getSensors(Characteristic characteristic, ArrayList<Sensor> sensors) {
+        ArrayList<org.md2k.autosenseble.device.Sensor> selected = new ArrayList<>();
+        for (Sensor sensor1 : sensors) {
+            if (sensor1.getCharacteristicName().equals(characteristic.getName())) {
+                selected.add(sensor1);
+            }
         }
-    }
-    private void calculateDataQualityECG(){
-        DataQualityECG sensor = (DataQualityECG) sensors.get(Sensor.KEY_DATA_QUALITY_ECG);
-        if (sensor != null) {
-            DataTypeInt dataTypeInt = new DataTypeInt(DateTime.getDateTime(), sensor.getStatus());
-            sensor.insert(dataTypeInt);
-            updateView(Sensor.KEY_DATA_QUALITY_ECG, dataTypeInt);
-        }
-    }
-    private void calculateDataQualityAccelerometer(){
-        DataQualityAccelerometer sensor = (DataQualityAccelerometer) sensors.get(Sensor.KEY_DATA_QUALITY_ACCELEROMETER);
-        if (sensor != null) {
-            DataTypeInt dataTypeInt = new DataTypeInt(DateTime.getDateTime(), sensor.getStatus());
-            sensor.insert(dataTypeInt);
-            updateView(Sensor.KEY_DATA_QUALITY_ACCELEROMETER, dataTypeInt);
-        }
+        return selected;
     }
 
-    void start() throws DataKitException {
-        for (Sensor sensor : sensors.values())
-            sensor.register();
+    abstract protected Observable<Data> getCharacteristicsObservable(RxBleConnection rxBleConnection);
 
-        subscriptionDataQuality = Observable.interval(DELAY, DELAY, TimeUnit.MILLISECONDS)
-                .subscribe(new Observer<Long>() {
+    void connect(Context context, ReceiveCallback receiveCallback) {
+        Log.d("abc", "connect start....device=" + deviceId);
+        subscriptionRetryConnect = Observable.just(true)
+                .map(new Func1<Boolean, RxBleDevice>() {
+                    @Override
+                    public RxBleDevice call(Boolean aBoolean) {
+                        RxBleDevice device = MyApplication.getRxBleClient(context).getBleDevice(deviceId);
+                        Log.d("abc", "Device retry: connect(): device=" + device.getMacAddress() + " status=" + device.getConnectionState().toString());
+                        unsubscribeConnect();
+//                if (device.getConnectionState() == RxBleConnection.RxBleConnectionState.DISCONNECTED) {
+                        subscribeConnect(context, receiveCallback);
+//                }
+                        return device;
+                    }
+                }).flatMap(new Func1<RxBleDevice, Observable<? extends RxBleConnection.RxBleConnectionState>>() {
+                    @Override
+                    public Observable<? extends RxBleConnection.RxBleConnectionState> call(RxBleDevice device) {
+                        return device.observeConnectionStateChanges();
+                    }
+                }).doOnUnsubscribe(this::unsubscribeConnect)
+                .flatMap(new Func1<RxBleConnection.RxBleConnectionState, Observable<RxBleConnection.RxBleConnectionState>>() {
+                    @Override
+                    public Observable<RxBleConnection.RxBleConnectionState> call(RxBleConnection.RxBleConnectionState rxBleConnectionState) {
+                        if (rxBleConnectionState == RxBleConnection.RxBleConnectionState.DISCONNECTED)
+                            return Observable.error(new Throwable("abc"));
+                        else return Observable.just(rxBleConnectionState);
+                    }
+                })
+                .retryWhen(errors -> errors.flatMap((Func1<Throwable, Observable<?>>) throwable -> {
+                    Log.e("abc", "Device retry: retrywhen(): error=" + throwable.toString());
+                    for (int i = 0; i < throwable.getStackTrace().length; i++)
+                        Log.e("abc", "Device retry: retrywhen(): error[]=" + throwable.getStackTrace()[i]);
+                    unsubscribeConnect();
+                    return Observable.timer(1000, TimeUnit.MILLISECONDS);
+                })).subscribe(new Observer<RxBleConnection.RxBleConnectionState>() {
                     @Override
                     public void onCompleted() {
-
+                        Log.e("abc", "Device retry: onCompleted()");
+                        unsubscribeConnect();
                     }
 
                     @Override
                     public void onError(Throwable e) {
-
+                        Log.e("abc", "Device retry: onError()=" + e.toString());
+                        unsubscribeConnect();
+//                        subscribeConnect(context, receiveCallback);
                     }
 
                     @Override
-                    public void onNext(Long aLong) {
-                        calculateDataQualityAccelerometer();
-                        calculateDataQualityECG();
-                        calculateDataQualityRespiration();
-                    }
-                });
-        subscriptionDeviceContinuous=Observable.interval(0, TIMEOUT_VALUE, TimeUnit.MILLISECONDS).map(new Func1<Long, Boolean>() {
-            @Override
-            public Boolean call(Long aLong) {
-                if(DateTime.getDateTime()-lastReceived>=TIMEOUT_VALUE){
-                    Log.d("abc","disconnect time="+DateTime.getDateTime());
-                    unsubscribeDevice();
-                    return false;
-                }else return true;
-            }
-        }).filter(new Func1<Boolean, Boolean>() {
-            @Override
-            public Boolean call(Boolean aBoolean) {
-                return !aBoolean;
-            }
-        }).flatMap(new Func1<Boolean, Observable<? extends Boolean>>() {
-            @Override
-            public Observable<? extends Boolean> call(Boolean aBoolean) {
-                return Observable.timer(2, TimeUnit.SECONDS).map(new Func1<Long, Boolean>() {
-                    @Override
-                    public Boolean call(Long aLong) {
-                        Log.d("abc","connect time="+DateTime.getDateTime());
-                        connectDevice();
-                        return true;
-                    }
-                });
-            }
-        }).subscribe(new Observer<Boolean>() {
-            @Override
-            public void onCompleted() {
-
-            }
-
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            @Override
-            public void onNext(Boolean aBoolean) {
-
-            }
-        });
-
-    }
-    private void connectDevice(){
-        RxBleDevice device = MyApplication.getRxBleClient().getBleDevice(getDeviceId());
-        subscriptionDevice = device.establishConnection(false)
-                .flatMap(rxBleConnection -> Observable.merge(rxBleConnection.setupNotification(Constants.IMU_SERV_CHAR_UUID), rxBleConnection.setupNotification(Constants.BATTERY_SERV_CHAR_UUID)))
-                .flatMap(notificationObservable -> notificationObservable).onBackpressureBuffer(1024)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<byte[]>() {
-                    @Override
-                    public void onCompleted() {
-
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Log.d("abc","error="+e.getMessage());
-                    }
-
-                    @Override
-                    public void onNext(byte[] bytes) {
-                        lastReceived=DateTime.getDateTime();
-                        if (bytes.length == 1)
-                            insertBattery(bytes[0]);
-                        else {
-                            insertData(lastReceived, bytes);
-                        }
-                    }
-                });
-
-    }
-
-    private void insertBattery(double value) {
-        DataTypeDoubleArray battery = new DataTypeDoubleArray(DateTime.getDateTime(), new double[]{value});
-        if (sensors.get(Sensor.KEY_BATTERY) != null) {
-            sensors.get(Sensor.KEY_BATTERY).insert(battery);
-            updateView(Sensor.KEY_BATTERY, battery);
-        }
-    }
-
-    void stop() {
-        if (subscriptionDeviceContinuous != null && !subscriptionDeviceContinuous.isUnsubscribed())
-            subscriptionDeviceContinuous.unsubscribe();
-        if (subscriptionDataQuality != null && !subscriptionDataQuality.isUnsubscribed())
-            subscriptionDataQuality.unsubscribe();
-        unsubscribeDevice();
-        for (Sensor sensor : sensors.values())
-            try {
-                sensor.unregister();
-            } catch (DataKitException e) {
-                e.printStackTrace();
-            }
-    }
-
-    public String getId() {
-        return platform.getId();
-    }
-
-    public String getType() {
-        return platform.getType();
-    }
-
-    public String getDeviceId() {
-        if (platform.getMetadata() == null) return null;
-        return platform.getMetadata().get(METADATA.DEVICE_ID);
-    }
-
-    public String getName() {
-        return platform.getMetadata().get(METADATA.NAME);
-    }
-
-    public HashMap<String, Sensor> getSensors() {
-        return sensors;
-    }
-
-    ArrayList<DataSource> getDataSources() {
-        ArrayList<DataSource> dataSources = new ArrayList<>();
-        for (Sensor sensor : sensors.values())
-            dataSources.add(sensor.getDataSource());
-        return dataSources;
-    }
-
-    private void updateView(String key, DataType data) {
-        String deviceId = getDeviceId(), platformId = getId();
-        if (startTimestamp == 0) startTimestamp = DateTime.getDateTime();
-        Intent intent = new Intent(ActivityMain.INTENT_NAME);
-        intent.putExtra("operation", "data");
-        String dataSourceUniqueId = key + '_' + platformId;
-        if (!hm.containsKey(dataSourceUniqueId)) {
-            hm.put(dataSourceUniqueId, 0);
-        }
-        hm.put(dataSourceUniqueId, hm.get(dataSourceUniqueId) + 1);
-        intent.putExtra("count", hm.get(dataSourceUniqueId));
-        intent.putExtra("timestamp", DateTime.getDateTime());
-        intent.putExtra("starttimestamp", startTimestamp);
-        intent.putExtra("data", data);
-        intent.putExtra("key", key);
-        intent.putExtra("deviceid", deviceId);
-        intent.putExtra("platformid", platformId);
-        LocalBroadcastManager.getInstance(MyApplication.getContext()).sendBroadcast(intent);
-    }
-    private void unsubscribeDevice(){
-        if (subscriptionDevice != null && !subscriptionDevice.isUnsubscribed())
-            subscriptionDevice.unsubscribe();
-
-    }
-    private void insertData(long timestamp, byte[] data) {
-        DataTypeDoubleArray acl, respiration, raw, seq, respirationBaseLine, ecg;
-        double[] aclSample=Data.getAccelerometer(data);
-        double[] ecgSample = Data.getECG(data);
-        double[] respirationSample=Data.getRespiration(data);
-        double[] respirationBaseLineSample = Data.getRespirationBase(data);
-        double[] seqSample= Data.getSequenceNumber(data);
-        double[] rawSample=Data.getRawData(data);
-
-
-        acl=new DataTypeDoubleArray(timestamp, aclSample);
-        respiration=new DataTypeDoubleArray(timestamp, respirationSample);
-        respirationBaseLine=new DataTypeDoubleArray(timestamp, respirationBaseLineSample);
-        seq=new DataTypeDoubleArray(timestamp, seqSample);
-        raw=new DataTypeDoubleArray(timestamp, rawSample);
-
-        if(sensors.get(Sensor.KEY_DATA_QUALITY_ACCELEROMETER)!=null)
-            ((DataQualityAccelerometer)sensors.get(Sensor.KEY_DATA_QUALITY_ACCELEROMETER)).add(aclSample[0]);
-        if(sensors.get(Sensor.KEY_DATA_QUALITY_RESPIRATION)!=null)
-            ((DataQualityRespiration)sensors.get(Sensor.KEY_DATA_QUALITY_RESPIRATION)).add(respirationSample[0]);
-        if(sensors.get(Sensor.KEY_ACCELEROMETER)!=null) {
-            sensors.get(Sensor.KEY_ACCELEROMETER).insert(acl);
-            updateView(Sensor.KEY_ACCELEROMETER, acl);
-        }
-
-        if(sensors.get(Sensor.KEY_RESPIRATION)!=null) {
-            sensors.get(Sensor.KEY_RESPIRATION).insert(respiration);
-            updateView(Sensor.KEY_RESPIRATION, respiration);
-        }
-        if(sensors.get(Sensor.KEY_RESPIRATION_BASELINE)!=null) {
-            sensors.get(Sensor.KEY_RESPIRATION_BASELINE).insert(respirationBaseLine);
-            updateView(Sensor.KEY_RESPIRATION_BASELINE, respirationBaseLine);
-        }
-
-        if(sensors.get(Sensor.KEY_ECG)!=null) {
-            int seqInt= (int) seqSample[0];
-            ECG ecgSensor = (ECG) sensors.get(Sensor.KEY_ECG);
-            ArrayList<DataTypeDoubleArray> db=ecgSensor.pushOld(seqInt);
-            if(db!=null && db.size()!=0){
-                for(int i=0;i<db.size();i++) {
-                    if(sensors.get(Sensor.KEY_DATA_QUALITY_ECG)!=null)
-                        ((DataQualityECG)sensors.get(Sensor.KEY_DATA_QUALITY_ECG)).add(db.get(i).getSample()[0]);
-                    updateView(Sensor.KEY_ECG, db.get(i));
-                }
-            }
-            db = ecgSensor.add(seqInt, ecgSample);
-            if(db!=null && db.size()!=0){
-                for(int i=0;i<db.size();i++) {
-                    if(sensors.get(Sensor.KEY_DATA_QUALITY_ECG)!=null)
-                        ((DataQualityECG)sensors.get(Sensor.KEY_DATA_QUALITY_ECG)).add(db.get(i).getSample()[0]);
-                    updateView(Sensor.KEY_ECG, db.get(i));
-                }
-            }
-        }
-
-        if(sensors.get(Sensor.KEY_RAW)!=null){
-            sensors.get(Sensor.KEY_RAW).insert(raw);
-            updateView(Sensor.KEY_RAW, raw);
-        }
-        if(sensors.get(Sensor.KEY_SEQUENCE_NUMBER)!=null){
-            sensors.get(Sensor.KEY_SEQUENCE_NUMBER).insert(seq);
-            updateView(Sensor.KEY_SEQUENCE_NUMBER, seq);
-        }
-    }
+                    public void onNext(RxBleConnection.RxBleConnectionState rxBleConnectionState) {
+                        Log.d("abc", "Device retry: OnNext() device=" + deviceId + " state change=" + rxBleConnectionState.toString());
 /*
-    void processECGData(){
-        for(int i=0;i<ecgBuffer.length;i++) {
-            if(ecgBuffer[i]!=-1)
-                updateView(Sensor.KEY_ECG, new DataTypeDoubleArray(DateTime.getDateTime(), new double[]{ecgBuffer[i]}));
-        }
-        for(int i=0;i<ecgBuffer.length;i++)
-            ecgBuffer[i]=-1;
-        timeStamplastECGSent=DateTime.getDateTime();
-
-    }
+                        if (rxBleConnectionState == RxBleConnection.RxBleConnectionState.DISCONNECTED) {
+                            unsubscribeConnect();
+                            subscribeConnect(context, receiveCallback);
+                        }
 */
+                    }
+                });
+    }
+
+    private void subscribeConnect(Context context, ReceiveCallback receiveCallback) {
+        RxBleDevice device = MyApplication.getRxBleClient(context).getBleDevice(deviceId);
+        Log.d("abc", "device = " + device.getMacAddress() + " connectionstate = " + device.getConnectionState().toString());
+        subscriptionConnect = device.establishConnection(false)
+                .onBackpressureBuffer(1024, null, BackpressureOverflow.ON_OVERFLOW_DROP_OLDEST)
+                .flatMap(rxBleConnection -> {
+                    Log.d("abc", "subscribeConnect() device=" + device.getMacAddress() + " connectionstate=" + device.getConnectionState().toString());
+                    BLEPair.pairDevice(context, device.getBluetoothDevice());
+                    return getCharacteristicsObservable(rxBleConnection);
+                })
+                //               .retry()
+//                .retryWhen(new RetryWithDelay(2000))
+
+/*
+                .retryWhen(errors -> errors.flatMap((Func1<Throwable, Observable<?>>) throwable -> {
+                    Log.e("abc", "Device=" + device.getMacAddress() + " error=" + throwable.toString());
+                    for(int i=0;i<throwable.getStackTrace().length;i++)
+                        Log.e("abc", "Device=" + device.getMacAddress() + " error[]=" + throwable.getStackTrace()[i]);
+
+                    return Observable.timer(3000,
+                            TimeUnit.MILLISECONDS);
+//                    return Observable.new RetryWithDelay(3000);
+//                    return Observable.just(null);
+                }))
+
+*/
+                .subscribeOn(Schedulers.newThread())
+                .subscribe(new Observer<Data>() {
+                    @Override
+                    public void onCompleted() {
+                        Log.e("abc", "Device -> onCompleted()");
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e("abc", "Device: onError()... e=" + e.toString());
+                        for (int i = 0; i < e.getStackTrace().length; i++)
+                            Log.e("abc", "Device: onError()... e[" + i + "]=" + e.getStackTrace()[i]);
+                    }
+
+                    @Override
+                    public void onNext(Data data) {
+                        if (receiveCallback != null)
+                            receiveCallback.onReceive(data);
+                    }
+                });
+    }
+
+    void disconnect() {
+        Log.d("abc", "device=" + deviceId + " disconnect() subscriptionRetryConnect=" + subscriptionRetryConnect);
+        if (subscriptionRetryConnect != null && !subscriptionRetryConnect.isUnsubscribed())
+            subscriptionRetryConnect.unsubscribe();
+        subscriptionRetryConnect = null;
+    }
+
+    private void unsubscribeConnect() {
+        Log.d("abc", "device=" + deviceId + " unsubscribeConnect() subscriptionConnect=" + subscriptionConnect);
+        try {
+            if (subscriptionConnect != null && !subscriptionConnect.isUnsubscribed())
+                subscriptionConnect.unsubscribe();
+            subscriptionConnect = null;
+        } catch (Exception e) {
+            Log.e("abc", "device=" + deviceId + " unsubscribeConnect() error = " + e.toString());
+        }
+    }
 }

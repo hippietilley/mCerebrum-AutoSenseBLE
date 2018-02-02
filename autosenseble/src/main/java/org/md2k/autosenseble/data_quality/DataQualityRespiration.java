@@ -1,18 +1,6 @@
-package org.md2k.autosenseble.device.sensor;
+package org.md2k.autosenseble.data_quality;
 
-import android.content.Intent;
-import android.support.v4.content.LocalBroadcastManager;
-
-import org.md2k.autosenseble.MyApplication;
-import org.md2k.autosenseble.ServiceAutoSense;
-import org.md2k.datakitapi.DataKitAPI;
-import org.md2k.datakitapi.datatype.DataTypeInt;
-import org.md2k.datakitapi.datatype.DataTypeIntArray;
-import org.md2k.datakitapi.exception.DataKitException;
-import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.mcerebrum.core.data_format.DATA_QUALITY;
-
-import java.util.ArrayList;
 
 /*
  * Copyright (c) 2016, The University of Memphis, MD2K Center
@@ -40,16 +28,9 @@ import java.util.ArrayList;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class DataQualityAccelerometer extends Sensor{
-    public final static double MINIMUM_EXPECTED_SAMPLES = 3 * (0.33) * 10.33;  //33% of a 3 second window with 10.33 sampling frequency
-    public final static float MAGNITUDE_VARIANCE_THRESHOLD = (float) 0.0025;   //this threshold comes from the data we collect by placing the wrist sensor on table. It compares with the wrist accelerometer on-body from participant #11 (smoking pilot study)
+public class DataQualityRespiration extends DataQuality{
+    private final static float MAGNITUDE_VARIANCE_THRESHOLD = (float) 0.0025;   //this threshold comes from the data we collect by placing the wrist sensor on table. It compares with the wrist accelerometer on-body from participant #11 (smoking pilot study)
 
-    private ArrayList<Double> samples;
-
-    public DataQualityAccelerometer(DataSource dataSource) {
-        super(dataSource);
-        samples = new ArrayList<>();
-    }
 
     public synchronized int getStatus() {
         try {
@@ -57,29 +38,12 @@ public class DataQualityAccelerometer extends Sensor{
             int size = samples.size();
             double samps[] = new double[size];
             for (int i = 0; i < size; i++)
-                samps[i] = samples.get(i);
+                samps[i] = samples.get(i).getSample()[0];
             samples.clear();
             status = currentQuality(samps);
             return status;
         }catch (Exception e){
             return DATA_QUALITY.GOOD;
-        }
-    }
-    public synchronized void add(double sample) {
-
-        samples.add(sample);
-    }
-
-    public void insert(DataTypeInt dataTypeInt){
-        int[] intArray=new int[7];
-        for(int i=0;i<7;i++) intArray[i]=0;
-        int value=dataTypeInt.getSample();
-        intArray[value]=3000;
-        try {
-            DataKitAPI.getInstance(MyApplication.getContext()).insert(dataSourceClient, dataTypeInt);
-            DataKitAPI.getInstance(MyApplication.getContext()).setSummary(dataSourceClient, new DataTypeIntArray(dataTypeInt.getDateTime(), intArray));
-        } catch (DataKitException e) {
-            LocalBroadcastManager.getInstance(MyApplication.getContext()).sendBroadcast(new Intent(ServiceAutoSense.INTENT_STOP));
         }
     }
 
@@ -105,9 +69,6 @@ public class DataQualityAccelerometer extends Sensor{
     private int currentQuality(double[] x) {       //just receive x axis, in fact it should work with any single axis.
         int len_x = x.length;
         if (len_x == 0) return DATA_QUALITY.BAND_OFF;
-
-//		if(len_x<MINIMUM_EXPECTED_SAMPLES)
-//			return DATA_QUALITY.BAND_OFF;
 
         double sd =getStdDev(x);
 

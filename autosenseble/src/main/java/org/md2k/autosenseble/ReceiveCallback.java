@@ -1,4 +1,4 @@
-package org.md2k.autosenseble.device.sensor;
+package org.md2k.autosenseble;
 /*
  * Copyright (c) 2016, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
@@ -26,6 +26,6 @@ package org.md2k.autosenseble.device.sensor;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-public interface OnReceiveData {
-    public void onReceived(byte[] data);
+public interface ReceiveCallback {
+    void onReceive(Data data);
 }

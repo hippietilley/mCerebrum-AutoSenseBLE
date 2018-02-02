@@ -1,7 +1,4 @@
-package org.md2k.autosenseble.device.sensor;
-
-import org.md2k.datakitapi.source.datasource.DataSource;
-
+package org.md2k.autosenseble.device;
 /*
  * Copyright (c) 2016, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
@@ -28,8 +25,47 @@ import org.md2k.datakitapi.source.datasource.DataSource;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class Accelerometer extends Sensor {
-    public Accelerometer(DataSource dataSource) {
-        super(dataSource);
+
+import org.md2k.datakitapi.source.datasource.DataSourceClient;
+
+public class Sensor {
+    private DataSourceClient dataSourceClient;
+    private String deviceType;
+    private String deviceId;
+    private String characteristicName;
+    private String dataSourceType;
+    private String dataSourceId;
+
+    public Sensor(DataSourceClient dataSourceClient, String deviceType, String deviceId, String characteristicName, String dataSourceType, String dataSourceId) {
+        this.deviceId=deviceId;
+        this.dataSourceClient = dataSourceClient;
+        this.deviceType = deviceType;
+        this.characteristicName = characteristicName;
+        this.dataSourceType = dataSourceType;
+        this.dataSourceId = dataSourceId;
+    }
+
+    public DataSourceClient getDataSourceClient() {
+        return dataSourceClient;
+    }
+
+    public String getDeviceType() {
+        return deviceType;
+    }
+
+    public String getCharacteristicName() {
+        return characteristicName;
+    }
+
+    public String getDataSourceType() {
+        return dataSourceType;
+    }
+
+    public String getDataSourceId() {
+        return dataSourceId;
+    }
+
+    public String getDeviceId() {
+        return deviceId;
     }
 }

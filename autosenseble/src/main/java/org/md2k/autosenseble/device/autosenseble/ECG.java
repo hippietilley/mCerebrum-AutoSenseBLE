@@ -1,5 +1,6 @@
-package org.md2k.autosenseble.device.sensor;
+package org.md2k.autosenseble.device.autosenseble;
 
+import org.md2k.autosenseble.device.Sensor;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.time.DateTime;
@@ -32,16 +33,18 @@ import java.util.ArrayList;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class ECG extends Sensor {
+public class ECG  {
     private int lastSeq;
     private double[] ecgBuffer = new double[16];
     private long startTime;
+    //TODO datasource fix
 
-    ECG(DataSource dataSource) {
-        super(dataSource);
-        for (int i = 0; i < ecgBuffer.length; i++)
-            ecgBuffer[i] = -1;
-    }
+//    ECG(DataSource dataSource) {
+//
+//          super(dataSource);
+//        for (int i = 0; i < ecgBuffer.length; i++)
+//            ecgBuffer[i] = -1;
+//    }
 
     public ArrayList<DataTypeDoubleArray> pushOld(int curSeq) {
         if (curSeq - lastSeq > 4) {
@@ -97,7 +100,8 @@ public class ECG extends Sensor {
             if (ecgBuffer[i] != -1) {
                 curTime = startTime + i * (endTime - startTime) / 16;
                 DataTypeDoubleArray db = new DataTypeDoubleArray(curTime, new double[]{ecgBuffer[i]});
-                insert(db);
+            //TODO insert ECG
+                //    insert(db);
                 dataTypeDoubleArrays.add(db);
                 ecgBuffer[i] = -1;
             }

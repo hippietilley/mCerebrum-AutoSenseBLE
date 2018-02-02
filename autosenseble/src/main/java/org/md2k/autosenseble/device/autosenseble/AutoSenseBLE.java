@@ -1,7 +1,4 @@
-package org.md2k.autosenseble.device.sensor;
-
-import org.md2k.datakitapi.source.datasource.DataSource;
-
+package org.md2k.autosenseble.device.autosenseble;
 /*
  * Copyright (c) 2016, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
@@ -28,8 +25,39 @@ import org.md2k.datakitapi.source.datasource.DataSource;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class Respiration extends Sensor {
-    public Respiration(DataSource dataSource) {
-        super(dataSource);
+
+import com.polidea.rxandroidble.RxBleConnection;
+
+
+import org.md2k.autosenseble.Data;
+import org.md2k.autosenseble.device.Characteristic;
+import org.md2k.autosenseble.device.Device;
+import org.md2k.autosenseble.device.Sensor;
+
+import java.util.ArrayList;
+
+import rx.Observable;
+
+public class AutoSenseBLE extends Device {
+
+    private static final String DEVICE_NAME = "EETech_Motion";
+    public static boolean is(String name, String serviceId){
+        return DEVICE_NAME.equals(name) && UUID.equals(serviceId);
+    }
+
+    public AutoSenseBLE(String deviceId) {
+        super(deviceId);
+    }
+
+    @Override
+    protected Observable<Data> getCharacteristicsObservable(RxBleConnection rxBleConnection) {
+        ArrayList<Observable<Data>> list=new ArrayList<>();
+        Characteristic cAcl=new CharacteristicAutosense();
+        ArrayList<Sensor> sensorLed=getSensors(cAcl, sensors);
+
+
+
+        if(sensorLed!=null) list.add(cAcl.getObservable(rxBleConnection, sensorLed));
+        return Observable.merge(list);
     }
 }

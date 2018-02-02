@@ -1,21 +1,6 @@
 package org.md2k.autosenseble.data_quality;
-
-import android.content.Context;
-
-import org.md2k.datakitapi.DataKitAPI;
-import org.md2k.datakitapi.datatype.DataTypeInt;
-import org.md2k.datakitapi.datatype.DataTypeIntArray;
-import org.md2k.datakitapi.exception.DataKitException;
-import org.md2k.datakitapi.source.datasource.DataSourceBuilder;
-import org.md2k.datakitapi.source.datasource.DataSourceClient;
-import org.md2k.datakitapi.source.platform.Platform;
-import org.md2k.datakitapi.time.DateTime;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
 /*
- * Copyright (c) 2015, The University of Memphis, MD2K Center
+ * Copyright (c) 2016, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
  * All rights reserved.
  *
@@ -40,49 +25,43 @@ import java.util.HashMap;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public abstract class DataQuality {
-    Context context;
-    ArrayList<Integer> samples;
-    DataSourceClient dataSourceClient;
-    DataSourceBuilder dataSourceBuilder;
 
-    DataQuality(Context context) {
-        this.context = context;
-        samples = new ArrayList<>();
+import org.md2k.autosenseble.Data;
+import org.md2k.autosenseble.device.Sensor;
+import org.md2k.datakitapi.datatype.DataType;
+import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
+import org.md2k.datakitapi.datatype.DataTypeInt;
+import org.md2k.datakitapi.datatype.DataTypeIntArray;
+import org.md2k.datakitapi.time.DateTime;
+
+
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+
+import rx.Observable;
+
+abstract class DataQuality {
+    private static final int DELAY = 3000;
+    ArrayList<DataTypeDoubleArray> samples;
+    DataQuality(){
+        samples=new ArrayList<>();
     }
-
-    abstract public DataSourceBuilder createDatSourceBuilder(Platform platform);
-
-    abstract public ArrayList<HashMap<String, String>> createDataDescriptors();
-
     public abstract int getStatus();
-
-    public synchronized void add(int sample) {
-
+    public Observable<Data> start(Sensor sensor){
+        return Observable.interval(DELAY, DELAY, TimeUnit.MILLISECONDS).map(aLong -> {
+            DataTypeInt dataTypeInt = new DataTypeInt(DateTime.getDateTime(), getStatus());
+            return new Data(sensor, dataTypeInt);
+        });
+    }
+    public synchronized void add(DataTypeDoubleArray sample) {
         samples.add(sample);
     }
 
-    public void insertToDataKit(int sample) throws DataKitException {
-        DataTypeInt dataTypeInt = new DataTypeInt(DateTime.getDateTime(), sample);
-        DataKitAPI.getInstance(context).insert(dataSourceClient, dataTypeInt);
-        int[] intArray=new int[7];
-        for(int i=0;i<7;i++) intArray[i]=0;
-        int value=dataTypeInt.getSample();
-        intArray[value]=3000;
-        DataKitAPI.getInstance(context).setSummary(dataSourceClient, new DataTypeIntArray(dataTypeInt.getDateTime(), intArray));
-    }
-
-    public boolean register(Platform platform) throws DataKitException {
-        dataSourceBuilder = createDatSourceBuilder(platform);
-        dataSourceClient = DataKitAPI.getInstance(context).register(dataSourceBuilder);
-        return dataSourceClient != null;
-    }
-
-
-    public void unregister() throws DataKitException {
-        if (dataSourceClient != null)
-            DataKitAPI.getInstance(context).unregister(dataSourceClient);
-        dataSourceClient = null;
-
+    DataType getSummary(DataTypeInt dataTypeInt) {
+            int[] intArray=new int[7];
+            for(int i=0;i<7;i++) intArray[i]=0;
+            int value=dataTypeInt.getSample();
+            intArray[value]=DELAY;
+            return new DataTypeIntArray(dataTypeInt.getDateTime(), intArray);
     }
 }

@@ -28,7 +28,7 @@ package org.md2k.autosenseble.device;
 
 import android.util.Log;
 
-class Data {
+class Data1 {
 
     static double[] getSequenceNumber(byte[] data) {
         int x=(data[19] & 0x00000000000000ff);

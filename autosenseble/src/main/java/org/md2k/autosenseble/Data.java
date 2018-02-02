@@ -1,7 +1,4 @@
-package org.md2k.autosenseble.device.sensor;
-
-import org.md2k.datakitapi.source.datasource.DataSource;
-
+package org.md2k.autosenseble;
 /*
  * Copyright (c) 2016, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
@@ -28,8 +25,25 @@ import org.md2k.datakitapi.source.datasource.DataSource;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class Raw extends Sensor {
-    public Raw(DataSource dataSource) {
-        super(dataSource);
+
+import org.md2k.autosenseble.device.Sensor;
+import org.md2k.datakitapi.datatype.DataType;
+
+
+public class Data {
+    private Sensor sensor;
+    private DataType dataType;
+
+    public Data(Sensor sensor, DataType dataType) {
+        this.sensor=sensor;
+        this.dataType = dataType;
+    }
+
+    public Sensor getSensor() {
+        return sensor;
+    }
+
+    public DataType getDataType() {
+        return dataType;
     }
 }

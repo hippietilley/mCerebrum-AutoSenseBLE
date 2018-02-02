@@ -1,7 +1,4 @@
-package org.md2k.autosenseble.device.sensor;
-
-import org.md2k.datakitapi.source.datasource.DataSource;
-
+package org.md2k.autosenseble;
 /*
  * Copyright (c) 2016, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
@@ -28,17 +25,60 @@ import org.md2k.datakitapi.source.datasource.DataSource;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class Battery extends Sensor {
-    public Battery(DataSource dataSource) {
-        super(dataSource);
+
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import org.md2k.datakitapi.time.DateTime;
+
+public class Summary implements Parcelable{
+    private long startTimestamp;
+    private int count;
+    Summary(){
+        startTimestamp= DateTime.getDateTime();
+        count = 0;
     }
-/*
-    public void insert(DataTypeInt dataTypeInt){
-        try {
-            DataKitAPI.getInstance(MyApplication.getAppContext()).insert(dataSourceClient, dataTypeInt);
-        } catch (DataKitException e) {
-            LocalBroadcastManager.getInstance(MyApplication.getAppContext()).sendBroadcast(new Intent(ServiceAutoSense.INTENT_STOP));
+
+    protected Summary(Parcel in) {
+        startTimestamp = in.readLong();
+        count = in.readInt();
+    }
+
+    public static final Creator<Summary> CREATOR = new Creator<Summary>() {
+        @Override
+        public Summary createFromParcel(Parcel in) {
+            return new Summary(in);
         }
+
+        @Override
+        public Summary[] newArray(int size) {
+            return new Summary[size];
+        }
+    };
+
+    public void set(){
+        count++;
     }
-    */
+
+    public long getStartTimestamp() {
+        return startTimestamp;
+    }
+
+    public int getCount() {
+        return count;
+    }
+    public double getFrequency(){
+        return (double)count/ ((DateTime.getDateTime()-startTimestamp)/1000.0);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(startTimestamp);
+        dest.writeInt(count);
+    }
 }

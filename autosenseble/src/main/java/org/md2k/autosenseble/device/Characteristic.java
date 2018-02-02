@@ -1,7 +1,4 @@
-package org.md2k.autosenseble.device.sensor;
-
-import org.md2k.datakitapi.source.datasource.DataSource;
-
+package org.md2k.autosenseble.device;
 /*
  * Copyright (c) 2016, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
@@ -28,8 +25,51 @@ import org.md2k.datakitapi.source.datasource.DataSource;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class SequenceNumber extends Sensor {
-    public SequenceNumber(DataSource dataSource) {
-        super(dataSource);
+
+import com.polidea.rxandroidble.RxBleConnection;
+
+import org.md2k.autosenseble.Data;
+import org.md2k.datakitapi.time.DateTime;
+
+import java.util.ArrayList;
+
+import rx.Observable;
+
+public abstract class Characteristic {
+    protected long lastTimestamp;
+    protected int lastSequence;
+    private String id;
+    protected double frequency;
+    private String name;
+
+    public Characteristic(String id, String name, double frequency) {
+        this.id = id;
+        this.frequency = frequency;
+        this.name=name;
     }
+
+    public double getFrequency() {
+        return frequency;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    abstract public Observable<Data> getObservable(RxBleConnection rxBleConnection, ArrayList<Sensor> sensors);
+
+    public String getId() {
+        return id;
+    }
+
+    protected long correctTimeStamp(int curSequence, int maxLimit) {
+        long time;
+        long curTime = DateTime.getDateTime();
+        int diff = (curSequence - lastSequence + maxLimit) % maxLimit;
+        time = (long) (lastTimestamp + (1000.0*diff)/frequency);
+        if (curTime < time || curTime - time > 5000)
+            time = curTime;
+        return time;
+    }
+
 }
