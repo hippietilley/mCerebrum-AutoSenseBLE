@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 
 import org.md2k.autosenseble.configuration.ConfigurationManager;
+import org.md2k.autosenseble.permission.ActivityPermission;
 import org.md2k.autosenseble.plot.ActivityPlotChoice;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDouble;

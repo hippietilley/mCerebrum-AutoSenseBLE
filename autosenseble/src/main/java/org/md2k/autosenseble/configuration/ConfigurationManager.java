@@ -109,7 +109,7 @@ public class ConfigurationManager {
             dataSources = MetaData.getDataSources(context, platformType);
         }else{
             for(int i=0;i<sensors.size();i++){
-                DataSource dataSource=MetaData.getDataSource(context, sensors.get(i).type, sensors.get(i).id, platformType);
+                DataSource dataSource= MetaData.getDataSource(context, sensors.get(i).type, sensors.get(i).id, platformType);
                 if(dataSource!=null)
                     dataSources.add(dataSource);
             }

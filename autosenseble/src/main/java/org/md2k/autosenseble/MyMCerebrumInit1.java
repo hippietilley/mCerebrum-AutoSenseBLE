@@ -1,4 +1,4 @@
-package org.md2k.autosenseble.device;
+package org.md2k.autosenseble;
 /*
  * Copyright (c) 2016, The University of Memphis, MD2K Center
  * - Syed Monowar Hossain <monowar.hossain@gmail.com>
@@ -26,33 +26,26 @@ package org.md2k.autosenseble.device;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import org.md2k.datakitapi.source.datasource.DataSource;
-import org.md2k.autosenseble.configuration.Configuration;
+import android.content.Context;
+import android.content.Intent;
 
-import java.util.ArrayList;
+import org.md2k.autosenseble.plot.ActivityPlotChoice;
+import org.md2k.mcerebrum.core.access.MCerebrum;
+import org.md2k.mcerebrum.core.access.MCerebrumInfo;
 
-public class MetaData {
-    private ArrayList<DataSource> metaData;
-    MetaData(){
-        metaData = Configuration.readMetaData();
-    }
-    public DataSource getDataSource(String dataSourceType, String dataSourceId, String platformType) {
-        for(int i=0;i<metaData.size();i++){
-            if(!metaData.get(i).getType().equals(dataSourceType)) continue;
-            if(!metaData.get(i).getPlatform().getType().equals(platformType)) continue;
-            if(dataSourceId==null && metaData.get(i).getId()==null) return metaData.get(i);
-            if(dataSourceId!=null && metaData.get(i).getId()!=null && dataSourceId.equals(metaData.get(i).getId())) return metaData.get(i);
+public class MyMCerebrumInit1 extends MCerebrumInfo {
+    @Override
+    public void update(final Context context) {
+        MCerebrum.setReportActivity(context, ActivityPlotChoice.class);
+        MCerebrum.setBackgroundService(context, ServiceAutoSense.class);
+        MCerebrum.setConfigureActivity(context, ActivitySettings.class);
+        MCerebrum.setPermissionActivity(context, ActivityPermission1.class);
+     //   MCerebrum.setConfigured(context, Configuration.isConfigured());
+      //  MCerebrum.setConfigureExact(context, Configuration.isEqualDefault());
+        if (!MCerebrum.getPermission(context)) {
+            Intent intent = new Intent(context, ActivityPermission1.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
         }
-        return null;
-    }
-
-    ArrayList<DataSource> getDataSources(String type) {
-        ArrayList<DataSource> dataSources=new ArrayList<>();
-        for(int i=0;i<metaData.size();i++){
-            if(metaData.get(i).getPlatform().getType().equals(type)){
-                dataSources.add(metaData.get(i));
-            }
-        }
-        return dataSources;
     }
 }

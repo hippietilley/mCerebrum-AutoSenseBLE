@@ -22,7 +22,7 @@ import pl.charmas.android.reactivelocation.ReactiveLocationProvider;
 import rx.Observer;
 import rx.Subscription;
 
-public class ActivityPermission extends AppCompatActivity {
+public class ActivityPermission1 extends AppCompatActivity {
     private static final int REQUEST_CHECK_SETTINGS=1121;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +36,7 @@ public class ActivityPermission extends AppCompatActivity {
             public void OnResponse(boolean isGranted) {
                 if (!isGranted) {
                     Toasty.error(getApplicationContext(), "!PERMISSION DENIED !!! Could not continue...", Toast.LENGTH_SHORT).show();
-                    MCerebrum.setPermission(ActivityPermission.this, false);
+                    MCerebrum.setPermission(ActivityPermission1.this, false);
                     finish();
                 } else {
                     enableGPS();
@@ -53,11 +53,11 @@ if (requestCode == REQUEST_CHECK_SETTINGS) {
             if (resultCode == Activity.RESULT_OK) {
                 // All required changes were successfully made
                 setResult(RESULT_OK);
-                MCerebrum.setPermission(ActivityPermission.this, true);
+                MCerebrum.setPermission(ActivityPermission1.this, true);
                 finish();
             } else {
                 Toast.makeText(this, "!PERMISSION DENIED !!! Could not continue...", Toast.LENGTH_SHORT).show();
-                MCerebrum.setPermission(ActivityPermission.this, false);
+                MCerebrum.setPermission(ActivityPermission1.this, false);
                 finish();
             }
         }
@@ -92,15 +92,15 @@ if (requestCode == REQUEST_CHECK_SETTINGS) {
                         try {
                             Status status = locationSettingsResult.getStatus();
                             if (status.getStatusCode() == LocationSettingsStatusCodes.RESOLUTION_REQUIRED) {
-                                status.startResolutionForResult(ActivityPermission.this, REQUEST_CHECK_SETTINGS);
+                                status.startResolutionForResult(ActivityPermission1.this, REQUEST_CHECK_SETTINGS);
                             } else {
                                 setResult(RESULT_OK);
-                                MCerebrum.setPermission(ActivityPermission.this, true);
+                                MCerebrum.setPermission(ActivityPermission1.this, true);
                                 finish();
                             }
                         } catch (Exception e) {
                             Toast.makeText(getBaseContext(), "!PERMISSION DENIED !!! Could not continue...", Toast.LENGTH_SHORT).show();
-                            MCerebrum.setPermission(ActivityPermission.this, false);
+                            MCerebrum.setPermission(ActivityPermission1.this, false);
                             finish();
                         }
 

@@ -8,7 +8,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 
-import org.md2k.autosenseble.ServiceAutoSense;
 import org.md2k.datakitapi.datatype.DataType;
 import org.md2k.datakitapi.datatype.DataTypeDouble;
 import org.md2k.datakitapi.datatype.DataTypeDoubleArray;
@@ -17,9 +16,9 @@ import org.md2k.datakitapi.datatype.DataTypeFloatArray;
 import org.md2k.datakitapi.source.datasource.DataSource;
 import org.md2k.datakitapi.source.datasource.DataSourceType;
 import org.md2k.mcerebrum.commons.plot.RealtimeLineChartActivity;
+import org.md2k.autosenseble.ActivityMain;
 
-
-public class ActivityPlot extends RealtimeLineChartActivity {
+public class ActivityPlot1 extends RealtimeLineChartActivity {
     DataSource dataSource;
 
     @Override
@@ -27,30 +26,23 @@ public class ActivityPlot extends RealtimeLineChartActivity {
         super.onCreate(savedInstanceState);
         try {
             dataSource = getIntent().getExtras().getParcelable(DataSource.class.getSimpleName());
-        }catch (Exception e){
+        } catch (Exception e) {
             finish();
         }
     }
 
-    @Override
-    public void onResume() {
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
-                new IntentFilter(ServiceAutoSense.INTENT_DATA));
-
-        super.onResume();
-    }
+  //  @Override
+//    public void onResume() {
+//        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+//         //       new IntentFilter(ActivityMain.INTENT_NAME));
+//
+//        super.onResume();
+//    }
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            DataSource ds = intent.getParcelableExtra(DataSource.class.getSimpleName());
-            if(!ds.getType().equals(dataSource.getType())) return;
-            if(ds.getId()!=null && dataSource.getId()!=null && !ds.getId().equals(dataSource.getId())) return;
-            if(ds.getId()==null && dataSource.getId()!=null) return;
-            if(ds.getId()!=null && dataSource.getId()==null) return;
-            if(!ds.getPlatform().getId().equals(dataSource.getPlatform().getId())) return;
-//            if(!ds.getPlatform().getType().equals(dataSource.getPlatform().getType())) return;
-            updatePlot(intent, ds.getType());
+            updatePlot(intent);
         }
     };
 
@@ -61,26 +53,23 @@ public class ActivityPlot extends RealtimeLineChartActivity {
         super.onPause();
     }
 
-    void updatePlot(Intent intent, String ds) {
+    void updatePlot(Intent intent) {
         float[] sample = new float[1];
         String[] legends;
-
+        String ds = intent.getStringExtra("key");
+        String pi = intent.getStringExtra("platformid");
+        if (!ds.equals(dataSource.getType()) || !pi.equals(dataSource.getPlatform().getId()))
+            return;
         getmChart().getDescription().setText(dataSource.getType());
         getmChart().getDescription().setPosition(1f, 1f);
         getmChart().getDescription().setEnabled(true);
         getmChart().getDescription().setTextColor(Color.WHITE);
-        switch (ds) {
-            case DataSourceType.ACCELEROMETER:
-                legends = new String[]{"Accelerometer X", "Accelerometer Y", "Accelerometer Z"};
-                break;
-            case DataSourceType.GYROSCOPE:
-                legends = new String[]{"Gyroscope X", "Gyroscope Y", "Gyroscope Z"};
-                break;
-            default:
-                legends = new String[]{ds};
-                break;
-        }
-        DataType data = intent.getParcelableExtra(DataType.class.getSimpleName());
+        if (ds.equals(DataSourceType.ECG))
+            legends = new String[]{"ECG 1", "ECG 2", "ECG 3"};
+        else if (ds.equals(DataSourceType.ACCELEROMETER)) {
+            legends = new String[]{"Accelerometer X", "Accelerometer Y", "Accelerometer Z"};
+        }  else legends = new String[]{ds};
+        DataType data = intent.getParcelableExtra("data");
         if (data instanceof DataTypeFloat) {
             sample = new float[]{((DataTypeFloat) data).getSample()};
         } else if (data instanceof DataTypeFloatArray) {
@@ -95,6 +84,7 @@ public class ActivityPlot extends RealtimeLineChartActivity {
             double samples = ((DataTypeDouble) data).getSample();
             sample = new float[]{(float) samples};
         }
+
         addEntry(sample, legends, 600);
     }
 

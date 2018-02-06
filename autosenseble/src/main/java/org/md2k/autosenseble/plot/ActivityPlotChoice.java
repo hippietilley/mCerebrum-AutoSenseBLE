@@ -52,7 +52,7 @@ public class ActivityPlotChoice extends AppCompatActivity {
                     finish();
                 } else {
                     if(getIntent().getParcelableExtra(DataSource.class.getSimpleName())!=null) {
-                        Intent intent = new Intent(ActivityPlotChoice.this, ActivityPlot.class);
+                        Intent intent = new Intent(ActivityPlotChoice.this, ActivityPlot1.class);
                         Bundle bundle = new Bundle();
                         bundle.putParcelable(DataSource.class.getSimpleName(), getIntent().getParcelableExtra(DataSource.class.getSimpleName()));
                         intent.putExtras(bundle);

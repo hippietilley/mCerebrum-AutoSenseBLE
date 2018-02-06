@@ -48,7 +48,7 @@ public class ActivitySettings extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         getFragmentManager().beginTransaction().replace(R.id.layout_preference_fragment,
-                new PrefsFragmentSettings()).commit();
+                new PrefsFragmentSettings1()).commit();
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);

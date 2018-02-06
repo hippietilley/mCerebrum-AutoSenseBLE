@@ -1,6 +1,5 @@
 package org.md2k.autosenseble;
 
-import android.bluetooth.BluetoothDevice;
 import android.os.Bundle;
 import android.os.ParcelUuid;
 import android.preference.ListPreference;
@@ -18,16 +17,11 @@ import com.polidea.rxandroidble.RxBleClient;
 import com.polidea.rxandroidble.scan.ScanResult;
 import com.polidea.rxandroidble.scan.ScanSettings;
 
-import org.md2k.autosenseble.configuration.ConfigurationManager;
-import org.md2k.autosenseble.device.autosenseble.AutoSenseBLE;
-import org.md2k.datakitapi.source.METADATA;
-import org.md2k.datakitapi.source.platform.Platform;
+import org.md2k.autosenseble.device.DeviceManager;
 import org.md2k.datakitapi.source.platform.PlatformType;
 import org.md2k.mcerebrum.commons.dialog.Dialog;
+import org.md2k.mcerebrum.commons.dialog.DialogCallback;
 
-
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import rx.Observer;
@@ -59,15 +53,15 @@ import rx.Subscription;
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-public class PrefsFragmentSettings extends PreferenceFragment {
+public class PrefsFragmentSettings1 extends PreferenceFragment {
     Subscription scanSubscription;
-    HashMap<String, BluetoothDevice> devices;
+    private DeviceManager deviceManager;
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        devices=new HashMap<>();
+        deviceManager = new DeviceManager();
         addPreferencesFromResource(R.xml.pref_settings);
         setPreferenceScreenConfigured();
     }
@@ -79,7 +73,7 @@ public class PrefsFragmentSettings extends PreferenceFragment {
     }
 
     void scan() {
-        RxBleClient rxBleClient = MyApplication.getRxBleClient(getActivity());
+        RxBleClient rxBleClient = MyApplication.getRxBleClient();
         scanSubscription = rxBleClient.scanBleDevices(
                 new ScanSettings.Builder()
                         // .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY) // change if needed
@@ -103,27 +97,24 @@ public class PrefsFragmentSettings extends PreferenceFragment {
                 String name = scanResult.getScanRecord().getDeviceName();
                 List<ParcelUuid> p = scanResult.getScanRecord().getServiceUuids();
                 if (p == null || p.size() != 1 || name == null) return;
-                if(!devices.containsKey(scanResult.getBleDevice().getMacAddress()))
-                    devices.put(scanResult.getBleDevice().getMacAddress(), scanResult.getBleDevice().getBluetoothDevice());
-                if (ConfigurationManager.isConfigured(scanResult.getBleDevice().getMacAddress()))
+                if (!deviceManager.isAutoSense(name))
                     return;
-                if (AutoSenseBLE.is(name, p.get(0).toString()))
+                if (deviceManager.isConfigured(scanResult.getBleDevice().getMacAddress())) return;
+                if (deviceManager.isAutoSense(name))
                     addToPreferenceScreenAvailable(PlatformType.AUTOSENSE_BLE, scanResult.getBleDevice().getMacAddress());
-                  }
+            }
         });
     }
-
 
     void setPreferenceScreenConfigured() {
         PreferenceCategory category = (PreferenceCategory) findPreference("key_device_configured");
         category.removeAll();
-        ArrayList<Platform> platforms = ConfigurationManager.getPlatforms();
-        for (int i = 0; i < platforms.size(); i++) {
+        for (int i = 0; i < deviceManager.size(); i++) {
             Preference preference = new Preference(getActivity());
-            preference.setKey(platforms.get(i).getMetadata().get(METADATA.DEVICE_ID));
-            preference.setTitle(platforms.get(i).getId());
-            preference.setSummary(platforms.get(i).getType() + " (" + platforms.get(i).getMetadata().get(METADATA.DEVICE_ID) + ")");
-
+            preference.setKey(deviceManager.get(i).getDeviceId());
+            preference.setTitle(deviceManager.get(i).getId());
+            preference.setSummary(deviceManager.get(i).getType() + " (" + deviceManager.get(i).getDeviceId() + ")");
+            preference.setIcon(R.drawable.ic_chest_teal_48dp);
             preference.setOnPreferenceClickListener(preferenceListenerConfigured());
             category.addPreference(preference);
         }
@@ -135,27 +126,23 @@ public class PrefsFragmentSettings extends PreferenceFragment {
             if (category.getPreference(i).getKey().equals(deviceId))
                 return;
         ListPreference listPreference = new ListPreference(getActivity());
-        listPreference.setEntryValues(R.array.wrist_entryValues_extended);
-        listPreference.setEntries(R.array.wrist_entries_extended);
-
-        if (ConfigurationManager.hasDefault()) {
-            String[] s = ConfigurationManager.getPlatformIdFromDefault();
-            if (s != null && s.length != 0) {
-                listPreference.setEntryValues(s);
-                listPreference.setEntries(s);
-            }
+        if (deviceManager.hasDefault()) {
+            listPreference.setEntryValues(R.array.wrist_entryValues);
+            listPreference.setEntries(R.array.wrist_entries);
+        } else {
+            listPreference.setEntryValues(R.array.wrist_entryValues_extended);
+            listPreference.setEntries(R.array.wrist_entries_extended);
         }
         listPreference.setKey(deviceId);
         listPreference.setTitle(deviceId);
         listPreference.setSummary(type);
-
+            listPreference.setIcon(R.drawable.ic_chest_teal_48dp);
         listPreference.setOnPreferenceChangeListener((preference, newValue) -> {
-            if (ConfigurationManager.isConfigured(newValue.toString(), preference.getKey()))
+            if (deviceManager.isConfigured(newValue.toString(), preference.getKey()))
                 Toast.makeText(getActivity(), "Device: " + preference.getKey() + "and/or Placement:" + newValue.toString() + " already configured", Toast.LENGTH_LONG).show();
             else {
-                ConfigurationManager.addPlatform(getActivity(), preference.getSummary().toString(), newValue.toString(), preference.getKey());
-                if(devices.containsKey(preference.getKey()))
-                    BLEPair.pairDevice(getActivity(), devices.get(preference.getKey()));
+                deviceManager.add(preference.getSummary().toString(), newValue.toString(), preference.getKey());
+                deviceManager.writeConfiguration(getActivity());
                 setPreferenceScreenConfigured();
                 category.removePreference(preference);
             }
@@ -167,12 +154,14 @@ public class PrefsFragmentSettings extends PreferenceFragment {
     private Preference.OnPreferenceClickListener preferenceListenerConfigured() {
         return preference -> {
             final String deviceId = preference.getKey();
-            Dialog.simple(getActivity(), "Delete Device", "Delete Device (" + preference.getTitle() + ")?", "Delete", "Cancel", value -> {
-                if ("Delete".equals(value)) {
-                    ConfigurationManager.deleteDevice(deviceId);
-                    if(devices.containsKey(deviceId))
-                        BLEPair.unpairDevice(getActivity(), devices.get(deviceId));
-                    setPreferenceScreenConfigured();
+            Dialog.simple(getActivity(), "Delete Device", "Delete Device (" + preference.getTitle() + ")?", "Delete", "Cancel", new DialogCallback() {
+                @Override
+                public void onSelected(String value) {
+                    if ("Delete".equals(value)) {
+                        deviceManager.delete(deviceId);
+                        deviceManager.writeConfiguration(getActivity());
+                        setPreferenceScreenConfigured();
+                    }
                 }
             }).show();
             return true;

@@ -88,7 +88,7 @@ public class PrefsFragmentPlot extends PreferenceFragment {
         preference.setTitle(title);
         preference.setSummary(platformId);
         preference.setOnPreferenceClickListener(preference1 -> {
-            Intent intent=new Intent(getActivity(), ActivityPlot.class);
+            Intent intent=new Intent(getActivity(), ActivityPlot1.class);
             Platform p = new PlatformBuilder().setId(platformId).setType(platformType).build();
             DataSource d = new DataSourceBuilder().setType(dataSourceType).setId(dataSourceId).setPlatform(p).build();
             Bundle bundle = new Bundle();
