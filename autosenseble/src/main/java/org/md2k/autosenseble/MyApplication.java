@@ -43,7 +43,7 @@ public class MyApplication extends Application {
         Log.d("abc","MyApplication.. onCreate()");
         rxBleClient = RxBleClient.create(this);
 //        RxBleClient.setLogLevel(RxBleLog.);
-        MCerebrum.init(getApplicationContext(), MyMCerebrumInit1.class);
+        MCerebrum.init(getApplicationContext(), MyMCerebrumInit.class);
         Log.d("abc","rxBleClient: state="+rxBleClient.getState().toString());
         Log.d("abc","rxBleClient: bondedDevices size="+rxBleClient.getBondedDevices().size());
     }
